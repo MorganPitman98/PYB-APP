@@ -30,63 +30,57 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
-  apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
-  authDomain: "pyb-fitness-web-app.firebaseapp.com",
-  projectId: "pyb-fitness-web-app",
-  storageBucket: "pyb-fitness-web-app.firebasestorage.app",
-  messagingSenderId: "64609252136",
-  appId: "1:64609252136:web:4045e9aab5f5bd11f2161d",
-  measurementId: "G-SDDD8W759S"
-};
+<script>
+  const firebaseConfig = {
+    // your config...
+  };
 
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  let isLogin = true;
 
-    let isLogin = true;
-    function toggleForm() {
-      isLogin = !isLogin;
-      document.getElementById('form-title').innerText = isLogin ? 'Login' : 'Register';
-      document.querySelector('button').innerText = isLogin ? 'Login' : 'Register';
-      document.querySelector('.toggle').innerText = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
-    }
+  function toggleForm() {
+    isLogin = !isLogin;
+    document.getElementById('form-title').innerText = isLogin ? 'Login' : 'Register';
+    document.querySelector('button').innerText = isLogin ? 'Login' : 'Register';
+    document.querySelector('.toggle').innerText = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
+  }
 
-    function handleAuth() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+  function handleAuth() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-      if (isLogin) {
-        auth.signInWithEmailAndPassword(email, password)
-          .then((userCredential) => {
-            const uid = userCredential.user.uid;
-            db.collection("users").doc(uid).get().then((doc) => {
-              if (doc.exists) {
-                const role = doc.data().role;
-                if (role === "admin") {
-                  window.location.href = "admin-dashboard.html";
-                } else {
-                  window.location.href = "client-dashboard.html";
-                }
+    if (isLogin) {
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const uid = userCredential.user.uid;
+          db.collection("users").doc(uid).get().then((doc) => {
+            if (doc.exists) {
+              const role = doc.data().role;
+              if (role === "admin") {
+                window.location.href = "admin-dashboard.html";
+              } else if (role === "client") {
+                window.location.href = "client-dashboard.html";
               } else {
                 alert("No role assigned. Contact admin.");
               }
-            });
-          })
-          .catch(error => alert(error.message));
-      } else {
-        auth.createUserWithEmailAndPassword(email, password)
-          .then((userCredential) => {
-            const uid = userCredential.user.uid;
-            db.collection("users").doc(uid).set({ role: "client" });
-            alert("Registration successful! You can now log in.");
-            toggleForm();
-          })
-          .catch(error => alert(error.message));
-      }
+            }
+          });
+        })
+        .catch(error => alert(error.message));
+    } else {
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const uid = userCredential.user.uid;
+          db.collection("users").doc(uid).set({ role: "client", email });
+          alert("Registration successful! You can now log in.");
+          toggleForm();
+        })
+        .catch(error => alert(error.message));
     }
-  </script>
+  }
+</script>
 </body>
 </html>
