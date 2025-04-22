@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Merch | PYB Fitness</title>
+  <style>
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+    body {
+      background: #000;
+      color: #00bfff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 { margin-bottom: 1rem; }
+    p { color: white; }
+  </style>
+</head>
+<body>
+  <h1>Admin Merch</h1>
+  <p>This is the merch section for the admin dashboard.</p>
+  <nav class="bottom-nav">
+    <a href="admin-dashboard.html" class="tab ">Dashboard</a>
+<a href="admin-timetable.html" class="tab ">Timetable</a>
+<a href="admin-programming.html" class="tab ">Programming</a>
+<a href="admin-training.html" class="tab ">Training</a>
+<a href="admin-merch.html" class="tab active">Merch</a>
+<a href="admin-more.html" class="tab ">More</a>
+  </nav>
+</body>
+</html>
