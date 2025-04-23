@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Programming | PYB Fitness</title>
+<style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 1rem 0;
+    }
+
+    .calendar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+
+    .day-selector {
+      display: flex;
+      gap: 0.5rem;
+      background: #111;
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+
+    .day {
+      background: #222;
+      color: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 60px;
+    }
+
+    .day.active {
+      background: #00bfff;
+      color: black;
+      font-weight: bold;
+    }
+
+    .arrow {
+      font-size: 1.5rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      color: white;
+    }
+
+    .workout-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .workout {
+      background: #111;
+      border-left: 4px solid #00bfff;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 90%;
+      text-align: left;
+    }
+
+    .edit-btn {
+      background: #00bfff;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<h1>Programming</h1>
+<div class="calendar-container">
+<div class="arrow" onclick="scrollDays(-1)">←</div>
+<div class="day-selector" id="daySelector">
+<div class="day active">Mon<br/>22</div>
+<div class="day">Tue<br/>23</div>
+<div class="day">Wed<br/>24</div>
+<div class="day">Thu<br/>25</div>
+<div class="day">Fri<br/>26</div>
+<div class="day">Sat<br/>27</div>
+<div class="day">Sun<br/>28</div>
+</div>
+<div class="arrow" onclick="scrollDays(1)">→</div>
+</div>
+
+<div style="padding: 1rem;">
+<textarea style="width: 90%; height: 250px; background: #111; color: white; border: none; border-radius: 8px; padding: 1rem;">
+PROGRAMMING NOTES
+
+A) Back Squat
+8,6,5
+
+- Rest 2:00 Between Sets
+- No Pauses this week just normal reps
+- 1 set of 8, 1 set of 6, 1 set of 5
+- 2011 tempo
+- RPE 8–9/10
+
+B) Every 3:00 x 3
+8/8 Bulgarian Split Squat
+8/8 Split Stance RDL
+
+B) Partner WOD
+3 Rounds
+600m Run Together
+60 wallball
+30 Sit Up
+      </textarea>
+<br/>
+<button style="background:#00bfff; color:black; font-weight:bold; padding:0.5rem 1rem; border:none; border-radius:5px; cursor:pointer;">Save Changes</button>
+</div>
+
+<nav class="bottom-nav">
+<a class="tab" href="admin-dashboard.html">Dashboard</a>
+<a class="tab" href="admin-timetable.html">Timetable</a>
+<a class="tab active" href="admin-programming.html">Programming</a>
+<a class="tab" href="admin-training.html">Training</a>
+<a class="tab" href="admin-more.html">More</a>
+<a class="tab" href="admin-merch.html">Merch</a>
+</nav>
+<script>
+    function scrollDays(direction) {
+      const selector = document.getElementById('daySelector');
+      selector.scrollLeft += direction * 100;
+    }
+  </script>
+</body>
+</html>
