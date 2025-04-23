@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timetable</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 1rem 0;
+    }
+
+    .calendar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+
+    .day-selector {
+      display: flex;
+      gap: 0.5rem;
+      background: #111;
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+
+    .day {
+      background: #222;
+      color: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 60px;
+    }
+
+    .day.active {
+      background: #00bfff;
+      color: black;
+      font-weight: bold;
+    }
+
+    .arrow {
+      font-size: 1.5rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      color: white;
+    }
+
+    .workout-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .workout {
+      background: #111;
+      border-left: 4px solid #00bfff;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 90%;
+      text-align: left;
+    }
+
+    .edit-btn {
+      background: #00bfff;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Timetable</h1>
+
+  <div class="calendar-container">
+    <div class="arrow" onclick="scrollDays(-1)">&#8592;</div>
+    <div class="day-selector" id="daySelector">
+      <div class="day active">Mon<br>22</div>
+      <div class="day">Tue<br>23</div>
+      <div class="day">Wed<br>24</div>
+      <div class="day">Thu<br>25</div>
+      <div class="day">Fri<br>26</div>
+      <div class="day">Sat<br>27</div>
+      <div class="day">Sun<br>28</div>
+    </div>
+    <div class="arrow" onclick="scrollDays(1)">&#8594;</div>
+  </div>
+
+  <div class="workout-list">
+    <div class="workout">
+      <strong>Functional - Lower Body Focus</strong><br>
+      06:00 – 07:00<br>
+      16/30<br>
+      <button class="edit-btn">Book</button>
+    </div>
+    <div class="workout">
+      <strong>Functional - Lower Body Focus</strong><br>
+      09:30 – 10:30<br>
+      12/30<br>
+      <button class="edit-btn">Book</button>
+    </div>
+    <div class="workout">
+      <strong>Functional - Lower Body Focus</strong><br>
+      17:30 – 18:30<br>
+      9/30<br>
+      <button class="edit-btn">Book</button>
+    </div>
+    <div class="workout">
+      <strong>Functional - Lower Body Focus</strong><br>
+      18:30 – 19:30<br>
+      5/30<br>
+      <button class="edit-btn">Book</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="client-dashboard.html" class="tab">Dashboard</a>
+    <a href="client-timetable.html" class="tab active">Timetable</a>
+    <a href="client-programming.html" class="tab">Programming</a>
+    <a href="client-training.html" class="tab">Training</a>
+    <a href="client-more.html" class="tab">More</a>
+    <a href="client-merch.html" class="tab">Merch</a>
+  </nav>
+
+  <script>
+    function scrollDays(direction) {
+      const selector = document.getElementById('daySelector');
+      selector.scrollLeft += direction * 100;
+    }
+  </script>
+</body>
+</html>
