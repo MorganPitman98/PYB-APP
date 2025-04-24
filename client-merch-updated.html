@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Merch | PYB Fitness</title>
+  <style>
+    body {
+      background: #000;
+      color: #00bfff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .merch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .merch-card {
+      background: #111;
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .merch-card img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+    .merch-card h3 {
+      color: cyan;
+      margin: 0.5rem 0;
+    }
+    .merch-card p {
+      color: white;
+      margin: 0.25rem 0;
+    }
+    .merch-card button {
+      margin-top: 0.5rem;
+      background: #00bfff;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Client Merch</h1>
+
+  <div class="merch-grid">
+    <div class="merch-card">
+      <img src="https://via.placeholder.com/200x200" alt="PYB Hoodie" />
+      <h3>PYB Hoodie</h3>
+      <p>Black hoodie with blue logo</p>
+      <p>£39.99</p>
+      <button>Buy Now</button>
+    </div>
+    <div class="merch-card">
+      <img src="https://via.placeholder.com/200x200" alt="PYB Bottle" />
+      <h3>PYB Bottle</h3>
+      <p>Insulated gym bottle</p>
+      <p>£14.99</p>
+      <button>Buy Now</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="client-dashboard.html" class="tab">Dashboard</a>
+    <a href="client-timetable.html" class="tab">Timetable</a>
+    <a href="client-programming.html" class="tab">Programming</a>
+    <a href="client-training.html" class="tab">Training</a>
+    <a href="client-merch.html" class="tab active">Merch</a>
+    <a href="client-more.html" class="tab">More</a>
+  </nav>
+</body>
+</html>
