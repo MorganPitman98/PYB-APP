@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Training | PYB Fitness</title>
+  <style>
+    body {
+      background: #000;
+      color: #00bfff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    section {
+      background: #111;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2 {
+      color: cyan;
+      text-align: left;
+    }
+    p {
+      color: white;
+      margin: 0.5rem 0;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Client Training</h1>
+
+  <section>
+    <h2>🏆 Personal Bests</h2>
+    <p><strong>Back Squat:</strong> 120kg</p>
+    <p><strong>Deadlift:</strong> 140kg</p>
+    <p><strong>Clean & Jerk:</strong> 90kg</p>
+  </section>
+
+  <section>
+    <h2>📊 Body Metrics</h2>
+    <p><strong>Weight:</strong> 78.5 kg</p>
+    <p><strong>Body Fat %:</strong> 15.2%</p>
+    <p><strong>Muscle Mass:</strong> 38.7 kg</p>
+  </section>
+
+  <nav class="bottom-nav">
+    <a href="client-dashboard.html" class="tab">Dashboard</a>
+    <a href="client-timetable.html" class="tab">Timetable</a>
+    <a href="client-programming.html" class="tab">Programming</a>
+    <a href="client-training.html" class="tab active">Training</a>
+    <a href="client-merch.html" class="tab">Merch</a>
+    <a href="client-more.html" class="tab">More</a>
+  </nav>
+</body>
+</html>
