@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Training | PYB Fitness</title>
+  <style>
+    body {
+      background: #000;
+      color: #00bfff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .user-entry {
+      background: #111;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .user-entry h2 {
+      color: cyan;
+      margin-bottom: 0.5rem;
+    }
+    label {
+      display: block;
+      color: white;
+      margin-top: 0.5rem;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      border: none;
+      border-radius: 6px;
+      background: #222;
+      color: white;
+    }
+    button {
+      margin-top: 1rem;
+      background: #00bfff;
+      border: none;
+      color: black;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Training</h1>
+
+  <div class="user-entry">
+    <h2>Jamie</h2>
+    <label>PB Notes</label>
+    <textarea placeholder="Enter PBs..."></textarea>
+    <label>Body Metrics</label>
+    <textarea placeholder="Weight, Body Fat %, etc."></textarea>
+    <button>Save for Jamie</button>
+  </div>
+
+  <div class="user-entry">
+    <h2>Sasha</h2>
+    <label>PB Notes</label>
+    <textarea placeholder="Enter PBs..."></textarea>
+    <label>Body Metrics</label>
+    <textarea placeholder="Weight, Body Fat %, etc."></textarea>
+    <button>Save for Sasha</button>
+  </div>
+
+  <div class="user-entry">
+    <h2>Leo</h2>
+    <label>PB Notes</label>
+    <textarea placeholder="Enter PBs..."></textarea>
+    <label>Body Metrics</label>
+    <textarea placeholder="Weight, Body Fat %, etc."></textarea>
+    <button>Save for Leo</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="admin-dashboard.html" class="tab">Dashboard</a>
+    <a href="admin-timetable.html" class="tab">Timetable</a>
+    <a href="admin-programming.html" class="tab">Programming</a>
+    <a href="admin-training.html" class="tab active">Training</a>
+    <a href="admin-merch.html" class="tab">Merch</a>
+    <a href="admin-more.html" class="tab">More</a>
+  </nav>
+</body>
+</html>
