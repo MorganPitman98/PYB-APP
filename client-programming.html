@@ -93,9 +93,9 @@
 <body>
   <h1>Programming</h1>
   <div class="calendar-container">
-    <div class="arrow" onclick="changeWeek(-7)">←</div>
+    <div class="arrow" onclick="changeDate(-1)">←</div>
     <div class="day-selector" id="daySelector"></div>
-    <div class="arrow" onclick="changeWeek(7)">→</div>
+    <div class="arrow" onclick="changeDate(1)">→</div>
   </div>
 
   <div id="programmingNotes" class="notes">
@@ -129,41 +129,30 @@
     const db = firebase.firestore();
 
     let selectedDate = new Date();
-    let weekOffset = 0;
 
-    function renderWeek() {
-      const daySelector = document.getElementById("daySelector");
-      daySelector.innerHTML = "";
-      const start = new Date();
-      start.setDate(start.getDate() - start.getDay() + 1 + weekOffset); // Start on Monday
-
-      for (let i = 0; i < 7; i++) {
-        const day = new Date(start);
-        day.setDate(start.getDate() + i);
-        const dayDiv = document.createElement("div");
-        dayDiv.className = "day";
-        if (day.toDateString() === selectedDate.toDateString()) {
-          dayDiv.classList.add("active");
-        }
-        dayDiv.innerHTML = `${day.toLocaleDateString('en-GB', { weekday: 'short' })}<br>${day.getDate()}`;
-        dayDiv.onclick = () => {
-          selectedDate = new Date(day);
-          renderWeek();
-          loadProgramming();
-        };
-        daySelector.appendChild(dayDiv);
-      }
+    function formatDate(date) {
+      return date.toISOString().split('T')[0];
     }
 
-    function changeWeek(offset) {
-      weekOffset += offset;
-      selectedDate.setDate(selectedDate.getDate() + offset);
-      renderWeek();
+    function renderDate() {
+      const daySelector = document.getElementById("daySelector");
+      daySelector.innerHTML = "";
+
+      const day = selectedDate;
+      const dayDiv = document.createElement("div");
+      dayDiv.className = "day active";
+      dayDiv.innerHTML = `${day.toLocaleDateString('en-GB', { weekday: 'short' })}<br>${day.getDate()}`;
+      daySelector.appendChild(dayDiv);
+    }
+
+    function changeDate(days) {
+      selectedDate.setDate(selectedDate.getDate() + days);
+      renderDate();
       loadProgramming();
     }
 
     function loadProgramming() {
-      const dateKey = selectedDate.toISOString().split('T')[0];
+      const dateKey = formatDate(selectedDate);
       const notesDiv = document.getElementById("programmingNotes");
       db.collection("programming").doc(dateKey).get().then((doc) => {
         if (doc.exists) {
@@ -175,7 +164,7 @@
     }
 
     window.onload = () => {
-      renderWeek();
+      renderDate();
       loadProgramming();
     };
   </script>
