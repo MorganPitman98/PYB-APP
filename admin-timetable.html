@@ -3,46 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Timetable | PYB Fitness</title>
+  <title>Timetable</title>
   <style>
-    body { background: #000; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; }
-    h1 { margin: 1rem 0; }
-    .calendar-container { display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; overflow-x: auto; gap: 0.5rem; }
-    .arrow { font-size: 1.5rem; padding: 0.5rem; cursor: pointer; color: white; user-select: none; }
-    .day-selector { display: flex; gap: 0.5rem; background: #111; padding: 0.5rem; border-radius: 8px; overflow-x: auto; }
-    .day { background: #222; color: white; padding: 0.75rem; border-radius: 6px; cursor: pointer; min-width: 60px; text-align: center; }
-    .day.active { background: #00bfff; color: black; font-weight: bold; }
-    .workout-list { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
-    .workout { background: #111; padding: 1rem; border-radius: 8px; border-left: 4px solid #00bfff; text-align: left; }
-    .edit-btn, .add-btn { background: #00bfff; color: black; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 0.5rem; }
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: #111; padding: 0.5rem 0; }
-    .bottom-nav .tab { color: white; font-size: 0.9rem; text-decoration: none; }
-    .bottom-nav .tab.active { color: cyan; font-weight: bold; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-    .modal-content { background: #222; padding: 1rem; border-radius: 10px; max-width: 400px; width: 90%; text-align: left; color: white; }
-    .modal-content input { width: 100%; margin-bottom: 1rem; padding: 0.5rem; border-radius: 5px; border: none; background: #333; color: white; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 1rem 0;
+    }
+
+    .calendar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+
+    .arrow {
+      font-size: 1.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: white;
+      user-select: none;
+    }
+
+    .day-selector {
+      display: flex;
+      gap: 0.5rem;
+      background: #111;
+      padding: 0.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .day {
+      background: #222;
+      color: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .day.active {
+      background: #00bfff;
+      color: black;
+      font-weight: bold;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>Admin Timetable</h1>
-  <div class="calendar-container">
-    <div class="arrow" onclick="changeDay(-1)">&#8592;</div>
-    <div class="day-selector" id="daySelector"></div>
-    <div class="arrow" onclick="changeDay(1)">&#8594;</div>
-  </div>
-  <div class="workout-list" id="workoutList"></div>
-  <button class="add-btn" onclick="openModal()">Add Class</button>
+  <h1>Timetable</h1>
 
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <h3 id="modalTitle">Add Class</h3>
-      <input id="className" placeholder="Class Name" />
-      <input id="startTime" placeholder="Start Time (e.g. 06:00)" />
-      <input id="endTime" placeholder="End Time (e.g. 07:00)" />
-      <input id="maxCapacity" placeholder="Max Capacity" type="number" />
-      <button onclick="saveClass()">Save</button>
-    </div>
+  <div class="calendar-container">
+    <div class="arrow" onclick="scrollDays(-1)">&#8592;</div>
+    <div class="day-selector" id="daySelector"></div>
+    <div class="arrow" onclick="scrollDays(1)">&#8594;</div>
   </div>
+
+  <script>
+    let selectedDate = new Date();
+    let startOffset = -Math.floor(7 / 2);
+
+    function renderDays() {
+      const daySelector = document.getElementById("daySelector");
+      daySelector.innerHTML = "";
+
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(selectedDate);
+        day.setDate(selectedDate.getDate() + (i + startOffset));
+        const div = document.createElement("div");
+        div.className = "day";
+        div.innerHTML = `${day.toLocaleDateString("en-GB", { weekday: 'short' })}<br>${day.getDate()}`;
+        if (day.toDateString() === selectedDate.toDateString()) div.classList.add("active");
+        div.onclick = () => {
+          selectedDate = day;
+          renderDays();
+        };
+        daySelector.appendChild(div);
+      }
+    }
+
+    function scrollDays(direction) {
+      selectedDate.setDate(selectedDate.getDate() + direction);
+      renderDays();
+    }
+
+    window.onload = renderDays;
+  </script>
 
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -52,113 +129,6 @@
     <a href="admin-more.html" class="tab">More</a>
     <a href="admin-merch.html" class="tab">Merch</a>
   </nav>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
-      authDomain: "pyb-fitness-web-app.firebaseapp.com",
-      projectId: "pyb-fitness-web-app",
-      storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let selectedDate = new Date();
-    function formatDateKey(date) {
-      return date.toISOString().split('T')[0];
-    }
-
-    function renderWeek() {
-      const selector = document.getElementById("daySelector");
-      selector.innerHTML = "";
-      const start = new Date(selectedDate);
-      start.setDate(start.getDate() - start.getDay() + 1);
-
-      for (let i = 0; i < 7; i++) {
-        const day = new Date(start);
-        day.setDate(start.getDate() + i);
-        const div = document.createElement("div");
-        div.className = "day";
-        if (day.toDateString() === selectedDate.toDateString()) div.classList.add("active");
-        div.innerHTML = `${day.toLocaleDateString('en-GB', { weekday: 'short' })}<br>${day.getDate()}`;
-        div.onclick = () => { selectedDate = day; renderWeek(); loadClasses(); };
-        selector.appendChild(div);
-      }
-    }
-
-    function changeDay(offset) {
-      selectedDate.setDate(selectedDate.getDate() + offset);
-      renderWeek();
-      loadClasses();
-    }
-
-    function loadClasses() {
-      const list = document.getElementById("workoutList");
-      list.innerHTML = "Loading...";
-      const dateKey = formatDateKey(selectedDate);
-
-      db.collection("timetable").doc(dateKey).collection("classes").get().then(snapshot => {
-        list.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "workout";
-          div.innerHTML = `<strong>${data.name}</strong><br>${data.start} – ${data.end}<br>${data.booked?.length || 0}/${data.capacity}<br><button class='edit-btn' onclick='editClass("${doc.id}", "${data.name}", "${data.start}", "${data.end}", ${data.capacity})'>Edit</button>`;
-          list.appendChild(div);
-        });
-      });
-    }
-
-    function openModal() {
-      document.getElementById("modal").style.display = "flex";
-      document.getElementById("className").value = "";
-      document.getElementById("startTime").value = "";
-      document.getElementById("endTime").value = "";
-      document.getElementById("maxCapacity").value = "";
-      editingId = null;
-    }
-
-    let editingId = null;
-    function editClass(id, name, start, end, capacity) {
-      openModal();
-      editingId = id;
-      document.getElementById("className").value = name;
-      document.getElementById("startTime").value = start;
-      document.getElementById("endTime").value = end;
-      document.getElementById("maxCapacity").value = capacity;
-    }
-
-    function saveClass() {
-      const name = document.getElementById("className").value;
-      const start = document.getElementById("startTime").value;
-      const end = document.getElementById("endTime").value;
-      const capacity = parseInt(document.getElementById("maxCapacity").value);
-      const dateKey = formatDateKey(selectedDate);
-      const ref = db.collection("timetable").doc(dateKey).collection("classes");
-
-      const classData = { name, start, end, capacity, booked: [] };
-      if (editingId) {
-        ref.doc(editingId).set(classData).then(() => {
-          document.getElementById("modal").style.display = "none";
-          loadClasses();
-        });
-      } else {
-        ref.add(classData).then(() => {
-          document.getElementById("modal").style.display = "none";
-          loadClasses();
-        });
-      }
-    }
-
-    window.onload = () => {
-      renderWeek();
-      loadClasses();
-    };
-  </script>
 </body>
 </html>
+
