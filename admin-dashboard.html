@@ -2,27 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard | PYB Fitness</title>
   <style>
-    body {
-      background: #000;
-      color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      text-align: center;
-    }
+    body { background: #000; color: #00bfff; font-family: Arial, sans-serif; padding: 2rem; text-align: center; }
     h1 { margin-bottom: 1rem; }
     p { color: white; }
-    .post-box, .post, .comments, .bottom-nav { background: #111; border-radius: 10px; }
-    .post-box textarea { width: 100%; background: #222; color: white; border: none; padding: 0.5rem; border-radius: 8px; resize: vertical; }
-    .post-box button, .post .actions button { background: #00bfff; color: black; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 0.5rem; }
-    .feed { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
-    .post { padding: 1rem; text-align: left; }
+
+    .post-box, .post { background: #111; border-radius: 10px; padding: 1rem; margin: 1rem auto; max-width: 600px; text-align: left; }
+    .post-box textarea { width: 100%; background: #222; color: white; border: none; border-radius: 8px; padding: 0.5rem; }
+    .post-box button { background: #00bfff; border: none; color: black; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 0.5rem; }
+
     .author { font-weight: bold; color: cyan; }
     .content { margin: 0.5rem 0; }
-    .comments p { margin: 0.2rem 0; color: #aaa; font-size: 0.85rem; }
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 0.5rem 0; }
+    .actions { display: flex; gap: 1rem; margin-top: 0.5rem; }
+    .actions button { background: none; border: none; color: #00bfff; cursor: pointer; }
+    .comments p { color: #aaa; margin: 0.25rem 0; font-size: 0.85rem; }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: #111; padding: 0.5rem 0; }
     .bottom-nav .tab { color: white; font-size: 0.8rem; text-decoration: none; padding: 0.5rem; }
     .bottom-nav .tab.active { color: cyan; font-weight: bold; }
   </style>
@@ -30,11 +26,14 @@
 <body>
   <h1>Admin Dashboard</h1>
   <p>Welcome to your dashboard. Share updates and engage with your community.</p>
+
   <div class="post-box">
-    <textarea id="postContent" rows="3" placeholder="What's on your mind?"></textarea>
+    <textarea id="postText" rows="3" placeholder="What's on your mind?"></textarea>
     <button onclick="createPost()">Post</button>
   </div>
-  <div class="feed" id="feed"></div>
+
+  <div id="feed"></div>
+
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab active">Dashboard</a>
     <a href="admin-timetable.html" class="tab">Timetable</a>
@@ -54,82 +53,81 @@
       projectId: "pyb-fitness-web-app",
       storageBucket: "pyb-fitness-web-app.appspot.com",
       messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d",
-      measurementId: "G-SDDD8W759S"
+      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
     };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
     const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const feed = document.getElementById("feed");
 
     function createPost() {
-      const content = document.getElementById("postContent").value.trim();
-      if (!content) return alert("Please write something first.");
-
+      const content = document.getElementById("postText").value.trim();
+      if (!content) return;
       const user = auth.currentUser;
-      if (!user) return alert("You must be logged in.");
-
       db.collection("posts").add({
         author: user.email,
         content,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        likes: 0,
+        timestamp: new Date(),
+        likes: [],
         comments: []
-      }).then(() => {
-        document.getElementById("postContent").value = "";
       });
+      document.getElementById("postText").value = "";
     }
 
     function renderPosts() {
       db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-        const feed = document.getElementById("feed");
         feed.innerHTML = "";
         snapshot.forEach(doc => {
-          const post = doc.data();
-          const div = document.createElement("div");
-          div.className = "post";
-          div.innerHTML = `
-            <div class="author">${post.author}</div>
-            <div class="content">${post.content}</div>
+          const data = doc.data();
+          const isMine = data.author === auth.currentUser.email;
+          const post = document.createElement("div");
+          post.className = "post";
+          post.innerHTML = `
+            <div class="author">${data.author}</div>
+            <div class="content">${data.content}</div>
             <div class="actions">
-              <button onclick="likePost('${doc.id}')">👍 Like (${post.likes || 0})</button>
-              <button onclick="toggleComment('${doc.id}')">💬 Comment</button>
+              <button onclick="toggleLike('${doc.id}')">👍 Like (${data.likes.length})</button>
+              <button onclick="promptComment('${doc.id}')">💬 Comment</button>
+              ${isMine ? `<button onclick="deletePost('${doc.id}')">🗑️ Delete</button>` : ""}
             </div>
-            <div class="comments" id="comments-${doc.id}">
-              ${(post.comments || []).map(c => `<p><strong>${c.name}:</strong> ${c.text}</p>`).join('')}
-              <input type="text" placeholder="Add comment..." onkeypress="submitComment(event, '${doc.id}')" style="width:100%;padding:4px;margin-top:4px;background:#222;color:white;border:none;border-radius:4px;" />
+            <div class="comments">
+              ${data.comments.map(c => `<p><strong>${c.user}:</strong> ${c.text}</p>`).join("")}
             </div>
           `;
-          feed.appendChild(div);
+          feed.appendChild(post);
         });
       });
     }
 
-    function likePost(id) {
-      const ref = db.collection("posts").doc(id);
-      db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(ref);
-        if (!doc.exists) return;
-        const newLikes = (doc.data().likes || 0) + 1;
-        transaction.update(ref, { likes: newLikes });
+    function toggleLike(postId) {
+      const user = auth.currentUser.email;
+      const ref = db.collection("posts").doc(postId);
+      ref.get().then(doc => {
+        const likes = doc.data().likes || [];
+        const updated = likes.includes(user) ? likes.filter(u => u !== user) : [...likes, user];
+        ref.update({ likes: updated });
       });
     }
 
-    function submitComment(e, id) {
-      if (e.key === "Enter") {
-        const input = e.target;
-        const text = input.value.trim();
-        if (!text) return;
-        const name = auth.currentUser?.email || "Anonymous";
-        const ref = db.collection("posts").doc(id);
-        ref.update({
-          comments: firebase.firestore.FieldValue.arrayUnion({ name, text })
-        });
-        input.value = "";
+    function promptComment(postId) {
+      const comment = prompt("Enter your comment:");
+      if (!comment) return;
+      const ref = db.collection("posts").doc(postId);
+      ref.update({
+        comments: firebase.firestore.FieldValue.arrayUnion({ user: auth.currentUser.email, text: comment })
+      });
+    }
+
+    function deletePost(postId) {
+      if (confirm("Delete this post?")) {
+        db.collection("posts").doc(postId).delete();
       }
     }
 
-    firebase.auth().onAuthStateChanged(user => {
+    auth.onAuthStateChanged(user => {
       if (user) renderPosts();
+      else window.location.href = "login.html";
     });
   </script>
 </body>
