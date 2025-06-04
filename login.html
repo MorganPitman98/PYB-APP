@@ -80,9 +80,9 @@
         .then((userCredential) => {
           const uid = userCredential.user.uid;
           db.collection("users").doc(uid).set({
-            email: email,
-            role: "client"
-          });
+  role: "client",
+  email: email
+});
           alert("Registration successful! You can now log in.");
           toggleForm();
         })
