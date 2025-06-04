@@ -2,121 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Client Dashboard | PYB Fitness</title>
   <style>
-    body {
-      background: #000;
-      color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      text-align: center;
-    }
+    body { background: #000; color: #00bfff; font-family: Arial, sans-serif; padding: 2rem; text-align: center; }
+    h1 { margin-bottom: 1rem; }
+    p { color: white; }
 
-    h1 {
-      margin-bottom: 1rem;
-    }
+    .post-box, .post { background: #111; border-radius: 10px; padding: 1rem; margin: 1rem auto; max-width: 600px; text-align: left; }
+    .post-box textarea { width: 100%; background: #222; color: white; border: none; border-radius: 8px; padding: 0.5rem; }
+    .post-box button { background: #00bfff; border: none; color: black; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 0.5rem; }
 
-    p {
-      color: white;
-    }
-
-    .post-box {
-      background: #111;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-
-    .post-box textarea {
-      width: 100%;
-      background: #222;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.5rem;
-      resize: vertical;
-    }
-
-    .post-box button {
-      background: #00bfff;
-      border: none;
-      color: black;
-      padding: 0.5rem 1rem;
-      margin-top: 0.5rem;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .feed {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .post {
-      background: #111;
-      padding: 1rem;
-      border-radius: 10px;
-      text-align: left;
-    }
-
-    .post .author {
-      font-weight: bold;
-      color: cyan;
-    }
-
-    .post .content {
-      margin: 0.5rem 0;
-    }
-
-    .post .actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .post .actions button {
-      background: none;
-      border: none;
-      color: #00bfff;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .comments {
-      margin-top: 0.5rem;
-    }
-
-    .comments p {
-      margin: 0.2rem 0;
-      color: #aaa;
-      font-size: 0.85rem;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
-      background: #111;
-      padding: 0.5rem 0;
-    }
-
-    .bottom-nav .tab {
-      color: white;
-      font-size: 0.8rem;
-      text-decoration: none;
-      padding: 0.5rem;
-    }
-
-    .bottom-nav .tab.active {
-      color: cyan;
-      font-weight: bold;
-    }
+    .author { font-weight: bold; color: cyan; }
+    .content { margin: 0.5rem 0; }
+    .actions { display: flex; gap: 1rem; margin-top: 0.5rem; }
+    .actions button { background: none; border: none; color: #00bfff; cursor: pointer; }
+    .comments p { color: #aaa; margin: 0.25rem 0; font-size: 0.85rem; }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: #111; padding: 0.5rem 0; }
+    .bottom-nav .tab { color: white; font-size: 0.8rem; text-decoration: none; padding: 0.5rem; }
+    .bottom-nav .tab.active { color: cyan; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -124,36 +28,11 @@
   <p>Welcome to your dashboard. Share updates and engage with your community.</p>
 
   <div class="post-box">
-    <textarea rows="3" placeholder="What's on your mind?"></textarea>
-    <button>Post</button>
+    <textarea id="postText" rows="3" placeholder="What's on your mind?"></textarea>
+    <button onclick="createPost()">Post</button>
   </div>
 
-  <div class="feed">
-    <div class="post">
-      <div class="author">User Emily</div>
-      <div class="content">🔥 Great job today team! That EMOM crushed it!</div>
-      <div class="actions">
-        <button>👍 Like (12)</button>
-        <span class="comments-count">3 Comments</span>
-      </div>
-      <div class="comments">
-        <p><strong>Jamie:</strong> That was brutal 😅</p>
-        <p><strong>Sasha:</strong> Loved it!! More of this!</p>
-        <p><strong>Leo:</strong> DOMS incoming 💪</p>
-      </div>
-    </div>
-    <div class="post">
-      <div class="author">User Liam</div>
-      <div class="content">New gear has landed! Check the merch tab 👕</div>
-      <div class="actions">
-        <button>👍 Like (7)</button>
-        <span class="comments-count">1 Comment</span>
-      </div>
-      <div class="comments">
-        <p><strong>Maya:</strong> Just ordered the new hoodie 🔥</p>
-      </div>
-    </div>
-  </div>
+  <div id="feed"></div>
 
   <nav class="bottom-nav">
     <a href="client-dashboard.html" class="tab active">Dashboard</a>
@@ -163,5 +42,93 @@
     <a href="client-merch.html" class="tab">Merch</a>
     <a href="client-more.html" class="tab">More</a>
   </nav>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
+      authDomain: "pyb-fitness-web-app.firebaseapp.com",
+      projectId: "pyb-fitness-web-app",
+      storageBucket: "pyb-fitness-web-app.appspot.com",
+      messagingSenderId: "64609252136",
+      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const feed = document.getElementById("feed");
+
+    function createPost() {
+      const content = document.getElementById("postText").value.trim();
+      if (!content) return;
+      const user = auth.currentUser;
+      db.collection("posts").add({
+        author: user.email,
+        content,
+        timestamp: new Date(),
+        likes: [],
+        comments: []
+      });
+      document.getElementById("postText").value = "";
+    }
+
+    function renderPosts() {
+      db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        feed.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const isMine = data.author === auth.currentUser.email;
+          const post = document.createElement("div");
+          post.className = "post";
+          post.innerHTML = `
+            <div class="author">${data.author}</div>
+            <div class="content">${data.content}</div>
+            <div class="actions">
+              <button onclick="toggleLike('${doc.id}')">👍 Like (${data.likes.length})</button>
+              <button onclick="promptComment('${doc.id}')">💬 Comment</button>
+              ${isMine ? `<button onclick="deletePost('${doc.id}')">🗑️ Delete</button>` : ""}
+            </div>
+            <div class="comments">
+              ${data.comments.map(c => `<p><strong>${c.user}:</strong> ${c.text}</p>`).join("")}
+            </div>
+          `;
+          feed.appendChild(post);
+        });
+      });
+    }
+
+    function toggleLike(postId) {
+      const user = auth.currentUser.email;
+      const ref = db.collection("posts").doc(postId);
+      ref.get().then(doc => {
+        const likes = doc.data().likes || [];
+        const updated = likes.includes(user) ? likes.filter(u => u !== user) : [...likes, user];
+        ref.update({ likes: updated });
+      });
+    }
+
+    function promptComment(postId) {
+      const comment = prompt("Enter your comment:");
+      if (!comment) return;
+      const ref = db.collection("posts").doc(postId);
+      ref.update({
+        comments: firebase.firestore.FieldValue.arrayUnion({ user: auth.currentUser.email, text: comment })
+      });
+    }
+
+    function deletePost(postId) {
+      if (confirm("Delete this post?")) {
+        db.collection("posts").doc(postId).delete();
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) renderPosts();
+      else window.location.href = "login.html";
+    });
+  </script>
 </body>
 </html>
