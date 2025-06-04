@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Timetable | PYB Fitness</title>
   <style>
     body {
@@ -93,34 +93,19 @@
       color: cyan;
       font-weight: bold;
     }
-    input, select {
-      margin: 0.5rem;
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: none;
-      width: 90%;
-      max-width: 400px;
-    }
   </style>
 </head>
 <body>
-<h1>Timetable</h1>
-
+<h1>Admin Timetable</h1>
 <div class="calendar-container">
   <div class="arrow" onclick="changeDay(-1)">←</div>
   <div class="day-selector" id="daySelector"></div>
   <div class="arrow" onclick="changeDay(1)">→</div>
 </div>
 
-<div>
-  <input id="className" placeholder="Class Name" />
-  <input id="startTime" type="time" />
-  <input id="endTime" type="time" />
-  <input id="maxPeople" type="number" placeholder="Max People" />
-  <button onclick="addClass()">Add Class</button>
-</div>
-
 <div class="workout-list" id="classList">Loading classes...</div>
+
+<button onclick="addClassPrompt()">Add New Class</button>
 
 <nav class="bottom-nav">
   <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -131,8 +116,8 @@
   <a href="admin-merch.html" class="tab">Merch</a>
 </nav>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script>
   const firebaseConfig = {
@@ -189,8 +174,10 @@
         classes.forEach((c, index) => {
           const div = document.createElement("div");
           div.className = "workout";
-          div.innerHTML = `<strong>${c.name}</strong><br>${c.start} - ${c.end}<br>${c.booked || 0}/${c.max}<br>
-            <button onclick="deleteClass(${index})">Delete</button>`;
+          div.innerHTML = `<strong>${c.name}</strong><br>${c.start} - ${c.end}<br>${(c.attendees || []).length}/${c.max}<br>
+            <button onclick="editClass(${index})">Edit</button>
+            <button onclick="deleteClass(${index})">Delete</button>
+            <button onclick="alert('Attendees:\n' + ${(c.attendees || []).join('\n')})">View Attendees</button>`;
           classList.appendChild(div);
         });
       } else {
@@ -199,23 +186,39 @@
     });
   }
 
-  function addClass() {
-    const name = document.getElementById("className").value;
-    const start = document.getElementById("startTime").value;
-    const end = document.getElementById("endTime").value;
-    const max = parseInt(document.getElementById("maxPeople").value);
-    if (!name || !start || !end || !max) return alert("Please fill all fields.");
+  function addClassPrompt() {
+    const name = prompt("Class name:");
+    const start = prompt("Start time (e.g., 06:00):");
+    const end = prompt("End time (e.g., 07:00):");
+    const max = parseInt(prompt("Max attendees:"), 10);
+    if (!name || !start || !end || isNaN(max)) return;
     const dateKey = formatDate(selectedDate);
-    db.collection("classes").doc(dateKey).get().then(doc => {
-      const list = doc.exists ? doc.data().list || [] : [];
-      list.push({ name, start, end, max, booked: 0, attendees: [] });
+    db.collection("classes").doc(dateKey).get().then((doc) => {
+      const list = doc.exists ? doc.data().list : [];
+      list.push({ name, start, end, max, attendees: [] });
+      db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
+    });
+  }
+
+  function editClass(index) {
+    const dateKey = formatDate(selectedDate);
+    db.collection("classes").doc(dateKey).get().then((doc) => {
+      if (!doc.exists) return;
+      const list = doc.data().list;
+      const c = list[index];
+      const name = prompt("Edit class name:", c.name);
+      const start = prompt("Edit start time:", c.start);
+      const end = prompt("Edit end time:", c.end);
+      const max = parseInt(prompt("Edit max attendees:", c.max), 10);
+      if (!name || !start || !end || isNaN(max)) return;
+      list[index] = { ...c, name, start, end, max };
       db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
     });
   }
 
   function deleteClass(index) {
     const dateKey = formatDate(selectedDate);
-    db.collection("classes").doc(dateKey).get().then(doc => {
+    db.collection("classes").doc(dateKey).get().then((doc) => {
       if (!doc.exists) return;
       const list = doc.data().list;
       list.splice(index, 1);
