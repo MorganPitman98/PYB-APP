@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Timetable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Timetable | PYB Fitness</title>
   <style>
     body {
       background: #000;
@@ -13,11 +13,7 @@
       padding: 0;
       text-align: center;
     }
-
-    h1 {
-      margin: 1rem 0;
-    }
-
+    h1 { margin: 1rem 0; }
     .calendar-container {
       display: flex;
       justify-content: center;
@@ -25,7 +21,6 @@
       margin-bottom: 1rem;
       gap: 0.5rem;
     }
-
     .arrow {
       font-size: 1.5rem;
       padding: 0.5rem;
@@ -33,7 +28,6 @@
       color: white;
       user-select: none;
     }
-
     .day-selector {
       display: flex;
       gap: 0.5rem;
@@ -42,7 +36,6 @@
       border-radius: 8px;
       overflow-x: auto;
     }
-
     .day {
       background: #222;
       color: white;
@@ -52,13 +45,36 @@
       min-width: 60px;
       text-align: center;
     }
-
     .day.active {
       background: #00bfff;
       color: black;
       font-weight: bold;
     }
-
+    .workout-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .workout {
+      background: #111;
+      border-left: 4px solid #00bfff;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 90%;
+      text-align: left;
+    }
+    .workout button {
+      background: #00bfff;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      margin-right: 0.5rem;
+    }
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -68,67 +84,150 @@
       background: #111;
       padding: 0.5rem 0;
     }
-
     .bottom-nav .tab {
       color: white;
       font-size: 0.9rem;
       text-decoration: none;
     }
-
     .bottom-nav .tab.active {
       color: cyan;
       font-weight: bold;
     }
+    input, select {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+      width: 90%;
+      max-width: 400px;
+    }
   </style>
 </head>
 <body>
-  <h1>Timetable</h1>
+<h1>Timetable</h1>
 
-  <div class="calendar-container">
-    <div class="arrow" onclick="scrollDays(-1)">&#8592;</div>
-    <div class="day-selector" id="daySelector"></div>
-    <div class="arrow" onclick="scrollDays(1)">&#8594;</div>
-  </div>
+<div class="calendar-container">
+  <div class="arrow" onclick="changeDay(-1)">←</div>
+  <div class="day-selector" id="daySelector"></div>
+  <div class="arrow" onclick="changeDay(1)">→</div>
+</div>
 
-  <script>
-    let selectedDate = new Date();
-    let startOffset = -Math.floor(7 / 2);
+<div>
+  <input id="className" placeholder="Class Name" />
+  <input id="startTime" type="time" />
+  <input id="endTime" type="time" />
+  <input id="maxPeople" type="number" placeholder="Max People" />
+  <button onclick="addClass()">Add Class</button>
+</div>
 
-    function renderDays() {
-      const daySelector = document.getElementById("daySelector");
-      daySelector.innerHTML = "";
+<div class="workout-list" id="classList">Loading classes...</div>
 
-      for (let i = 0; i < 7; i++) {
-        const day = new Date(selectedDate);
-        day.setDate(selectedDate.getDate() + (i + startOffset));
-        const div = document.createElement("div");
-        div.className = "day";
-        div.innerHTML = `${day.toLocaleDateString("en-GB", { weekday: 'short' })}<br>${day.getDate()}`;
-        if (day.toDateString() === selectedDate.toDateString()) div.classList.add("active");
-        div.onclick = () => {
-          selectedDate = day;
-          renderDays();
-        };
-        daySelector.appendChild(div);
+<nav class="bottom-nav">
+  <a href="admin-dashboard.html" class="tab">Dashboard</a>
+  <a href="admin-timetable.html" class="tab active">Timetable</a>
+  <a href="admin-programming.html" class="tab">Programming</a>
+  <a href="admin-training.html" class="tab">Training</a>
+  <a href="admin-more.html" class="tab">More</a>
+  <a href="admin-merch.html" class="tab">Merch</a>
+</nav>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
+    authDomain: "pyb-fitness-web-app.firebaseapp.com",
+    projectId: "pyb-fitness-web-app",
+    storageBucket: "pyb-fitness-web-app.appspot.com",
+    messagingSenderId: "64609252136",
+    appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let selectedDate = new Date();
+
+  function formatDate(date) {
+    return date.toISOString().split("T")[0];
+  }
+
+  function renderDays() {
+    const container = document.getElementById("daySelector");
+    container.innerHTML = "";
+    const start = new Date(selectedDate);
+    start.setDate(start.getDate() - 3);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const div = document.createElement("div");
+      div.className = "day" + (d.toDateString() === selectedDate.toDateString() ? " active" : "");
+      div.innerHTML = `${d.toLocaleDateString("en-GB", { weekday: 'short' })}<br>${d.getDate()}`;
+      div.onclick = () => {
+        selectedDate = d;
+        renderDays();
+        loadClasses();
+      };
+      container.appendChild(div);
+    }
+  }
+
+  function changeDay(offset) {
+    selectedDate.setDate(selectedDate.getDate() + offset);
+    renderDays();
+    loadClasses();
+  }
+
+  function loadClasses() {
+    const classList = document.getElementById("classList");
+    classList.innerHTML = "Loading...";
+    const dateKey = formatDate(selectedDate);
+    db.collection("classes").doc(dateKey).get().then((doc) => {
+      classList.innerHTML = "";
+      if (doc.exists) {
+        const classes = doc.data().list || [];
+        classes.forEach((c, index) => {
+          const div = document.createElement("div");
+          div.className = "workout";
+          div.innerHTML = `<strong>${c.name}</strong><br>${c.start} - ${c.end}<br>${c.booked || 0}/${c.max}<br>
+            <button onclick="deleteClass(${index})">Delete</button>`;
+          classList.appendChild(div);
+        });
+      } else {
+        classList.innerHTML = "No classes scheduled.";
       }
-    }
+    });
+  }
 
-    function scrollDays(direction) {
-      selectedDate.setDate(selectedDate.getDate() + direction);
-      renderDays();
-    }
+  function addClass() {
+    const name = document.getElementById("className").value;
+    const start = document.getElementById("startTime").value;
+    const end = document.getElementById("endTime").value;
+    const max = parseInt(document.getElementById("maxPeople").value);
+    if (!name || !start || !end || !max) return alert("Please fill all fields.");
+    const dateKey = formatDate(selectedDate);
+    db.collection("classes").doc(dateKey).get().then(doc => {
+      const list = doc.exists ? doc.data().list || [] : [];
+      list.push({ name, start, end, max, booked: 0, attendees: [] });
+      db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
+    });
+  }
 
-    window.onload = renderDays;
-  </script>
+  function deleteClass(index) {
+    const dateKey = formatDate(selectedDate);
+    db.collection("classes").doc(dateKey).get().then(doc => {
+      if (!doc.exists) return;
+      const list = doc.data().list;
+      list.splice(index, 1);
+      db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
+    });
+  }
 
-  <nav class="bottom-nav">
-    <a href="admin-dashboard.html" class="tab">Dashboard</a>
-    <a href="admin-timetable.html" class="tab active">Timetable</a>
-    <a href="admin-programming.html" class="tab">Programming</a>
-    <a href="admin-training.html" class="tab">Training</a>
-    <a href="admin-more.html" class="tab">More</a>
-    <a href="admin-merch.html" class="tab">Merch</a>
-  </nav>
+  window.onload = () => {
+    renderDays();
+    loadClasses();
+  };
+</script>
 </body>
 </html>
 
