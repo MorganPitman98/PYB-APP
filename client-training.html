@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Client Training | PYB Fitness</title>
   <style>
     body {
@@ -28,33 +28,53 @@
       color: cyan;
       text-align: left;
     }
-    label, input, textarea {
+    label, input, textarea, button {
       display: block;
       width: 100%;
-      margin-bottom: 0.5rem;
+      margin-top: 0.5rem;
     }
     input, textarea {
-      padding: 0.5rem;
       background: #222;
-      color: white;
       border: none;
-      border-radius: 5px;
+      padding: 0.5rem;
+      border-radius: 6px;
+      color: white;
+    }
+    textarea {
+      height: 4rem;
+      resize: vertical;
     }
     button {
       background: #00bfff;
       color: black;
-      padding: 0.5rem 1rem;
+      font-weight: bold;
       border: none;
-      border-radius: 5px;
+      padding: 0.5rem;
+      margin-top: 1rem;
       cursor: pointer;
-      margin-right: 0.5rem;
     }
     .pb-entry {
       background: #222;
-      color: white;
-      padding: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 6px;
       margin-top: 0.5rem;
-      border-radius: 5px;
+      color: white;
+    }
+    .pb-entry pre {
+      white-space: pre-wrap;
+      margin: 0;
+    }
+    .pb-entry small {
+      display: block;
+      color: #888;
+    }
+    .pb-entry .actions {
+      margin-top: 0.5rem;
+    }
+    .pb-entry .actions button {
+      background: #333;
+      color: #00bfff;
+      margin-right: 0.5rem;
     }
     .bottom-nav {
       position: fixed;
@@ -78,113 +98,61 @@
   </style>
 </head>
 <body>
-  <h1>Client Training</h1>
+<h1>Client Training</h1>
 
-  <section>
-    <h2>🏆 Personal Bests</h2>
-    <label for="pbName">Exercise</label>
-    <textarea id="pbName" rows="3" placeholder="e.g. Murph: 1 mile run, 100 pull-ups, 200 push-ups, 300 squats, 1 mile run"></textarea>
-    <label for="pbValue">Value</label>
-    <input type="text" id="pbValue" placeholder="e.g. 45:32 or 120kg">
-    <button onclick="addPB()">Add PB</button>
-    <div id="pbList">Loading...</div>
-  </section>
+<section>
+  <h2>🏆 Personal Bests</h2>
+  <label>Exercise</label>
+  <textarea id="pbExercise" placeholder="e.g. Murph: 1 mile run, 100 pull-ups..."></textarea>
 
-  <nav class="bottom-nav">
-    <a href="client-dashboard.html" class="tab">Dashboard</a>
-    <a href="client-timetable.html" class="tab">Timetable</a>
-    <a href="client-programming.html" class="tab">Programming</a>
-    <a href="client-training.html" class="tab active">Training</a>
-    <a href="client-merch.html" class="tab">Merch</a>
-    <a href="client-more.html" class="tab">More</a>
-  </nav>
+  <label>Value</label>
+  <textarea id="pbValue" placeholder="e.g. 45:32 or 120kg"></textarea>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
-      authDomain: "pyb-fitness-web-app.firebaseapp.com",
-      projectId: "pyb-fitness-web-app",
-      storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    let currentUser = null;
+  <button onclick="addPB()">Add PB</button>
+  <div id="pbList">Loading...</div>
+</section>
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        currentUser = user;
-        loadPBs();
-      } else {
-        window.location.href = "login.html";
-      }
-    });
+<nav class="bottom-nav">
+  <a href="client-dashboard.html" class="tab">Dashboard</a>
+  <a href="client-timetable.html" class="tab">Timetable</a>
+  <a href="client-programming.html" class="tab">Programming</a>
+  <a href="client-training.html" class="tab active">Training</a>
+  <a href="client-merch.html" class="tab">Merch</a>
+  <a href="client-more.html" class="tab">More</a>
+</nav>
 
-    function addPB() {
-      const name = document.getElementById("pbName").value.trim();
-      const value = document.getElementById("pbValue").value.trim();
-      if (!name || !value) return alert("Please fill out both fields.");
-      db.collection("pbs").add({
-        uid: currentUser.uid,
-        name,
-        value,
-        created: new Date()
-      }).then(() => {
-        document.getElementById("pbName").value = "";
-        document.getElementById("pbValue").value = "";
-        loadPBs();
-      });
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
+    authDomain: "pyb-fitness-web-app.firebaseapp.com",
+    projectId: "pyb-fitness-web-app",
+    storageBucket: "pyb-fitness-web-app.appspot.com",
+    messagingSenderId: "64609252136",
+    appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  let currentUID = "";
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUID = user.uid;
+      loadPBs();
+    } else {
+      alert("Please log in.");
+      window.location.href = "login.html";
     }
+  });
 
-    function loadPBs() {
-      const pbList = document.getElementById("pbList");
-      pbList.innerHTML = "Loading...";
-      db.collection("pbs")
-        .where("uid", "==", currentUser.uid)
-        .orderBy("created", "desc")
-        .get()
-        .then(snapshot => {
-          pbList.innerHTML = "";
-          if (snapshot.empty) {
-            pbList.innerHTML = "<p>No PBs logged yet.</p>";
-            return;
-          }
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const div = document.createElement("div");
-            div.className = "pb-entry";
-            div.innerHTML = `
-              <strong>${data.name}</strong><br>${data.value}<br>
-              <button onclick="editPB('${doc.id}', '${data.name}', '${data.value}')">Edit</button>
-              <button onclick="deletePB('${doc.id}')">Delete</button>
-            `;
-            pbList.appendChild(div);
-          });
-        });
-    }
-
-    function deletePB(id) {
-      if (confirm("Delete this PB?")) {
-        db.collection("pbs").doc(id).delete().then(loadPBs);
-      }
-    }
-
-    function editPB(id, name, value) {
-      const newName = prompt("Edit Exercise", name);
-      const newValue = prompt("Edit Value", value);
-      if (newName && newValue) {
-        db.collection("pbs").doc(id).update({
-          name: newName,
-          value: newValue
-        }).then(loadPBs);
-      }
-    }
-  </script>
-</body>
-</html>
+  function addPB() {
+    const exercise = document.getElementById("pbExercise").value.trim();
+    const value = document.getElementById("pbValue").value.trim();
+    if (!exercise || !value) return alert("Please fill out both fields.");
+    db.collection("pbs").add({
+      uid: currentUID,
 
