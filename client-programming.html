@@ -93,14 +93,12 @@
 <body>
   <h1>Programming</h1>
   <div class="calendar-container">
-    <div class="arrow" onclick="changeDay(-1)">←</div>
+    <div class="arrow" onclick="moveDay(-1)">←</div>
     <div class="day-selector" id="daySelector"></div>
-    <div class="arrow" onclick="changeDay(1)">→</div>
+    <div class="arrow" onclick="moveDay(1)">→</div>
   </div>
 
-  <div id="programmingNotes" class="notes">
-    Loading programming...
-  </div>
+  <div id="programmingNotes" class="notes">Loading programming...</div>
 
   <nav class="bottom-nav">
     <a class="tab" href="client-dashboard.html">Dashboard</a>
@@ -113,7 +111,6 @@
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
@@ -130,39 +127,44 @@
 
     let selectedDate = new Date();
 
-    function renderWeek() {
+    function renderDays() {
       const daySelector = document.getElementById("daySelector");
       daySelector.innerHTML = "";
+
       const start = new Date(selectedDate);
-      start.setDate(start.getDate() - start.getDay() + 1); // Start on Monday
+      start.setDate(start.getDate() - 3);
 
       for (let i = 0; i < 7; i++) {
         const day = new Date(start);
         day.setDate(start.getDate() + i);
+
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
         if (day.toDateString() === selectedDate.toDateString()) {
           dayDiv.classList.add("active");
         }
+
         dayDiv.innerHTML = `${day.toLocaleDateString('en-GB', { weekday: 'short' })}<br>${day.getDate()}`;
         dayDiv.onclick = () => {
           selectedDate = new Date(day);
-          renderWeek();
+          renderDays();
           loadProgramming();
         };
+
         daySelector.appendChild(dayDiv);
       }
     }
 
-    function changeDay(offset) {
-      selectedDate.setDate(selectedDate.getDate() + offset);
-      renderWeek();
+    function moveDay(direction) {
+      selectedDate.setDate(selectedDate.getDate() + direction);
+      renderDays();
       loadProgramming();
     }
 
     function loadProgramming() {
       const dateKey = selectedDate.toISOString().split('T')[0];
       const notesDiv = document.getElementById("programmingNotes");
+
       db.collection("programming").doc(dateKey).get().then((doc) => {
         if (doc.exists) {
           notesDiv.innerText = doc.data().notes;
@@ -173,7 +175,7 @@
     }
 
     window.onload = () => {
-      renderWeek();
+      renderDays();
       loadProgramming();
     };
   </script>
