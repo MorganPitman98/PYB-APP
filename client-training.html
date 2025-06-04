@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Client Training | PYB Fitness</title>
   <style>
     body {
@@ -28,9 +28,31 @@
       color: cyan;
       text-align: left;
     }
-    p {
+    label, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+    input {
+      padding: 0.5rem;
+      background: #222;
       color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      background: #00bfff;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+    .pb-item {
       margin: 0.5rem 0;
+      color: white;
     }
     .bottom-nav {
       position: fixed;
@@ -58,16 +80,13 @@
 
   <section>
     <h2>🏆 Personal Bests</h2>
-    <p><strong>Back Squat:</strong> 120kg</p>
-    <p><strong>Deadlift:</strong> 140kg</p>
-    <p><strong>Clean & Jerk:</strong> 90kg</p>
-  </section>
-
-  <section>
-    <h2>📊 Body Metrics</h2>
-    <p><strong>Weight:</strong> 78.5 kg</p>
-    <p><strong>Body Fat %:</strong> 15.2%</p>
-    <p><strong>Muscle Mass:</strong> 38.7 kg</p>
+    <div id="pbList">Loading...</div>
+    <hr>
+    <label for="pbName">Exercise</label>
+    <input type="text" id="pbName" placeholder="e.g. Back Squat">
+    <label for="pbValue">Value</label>
+    <input type="text" id="pbValue" placeholder="e.g. 120kg or 6:30">
+    <button onclick="addPB()">Add PB</button>
   </section>
 
   <nav class="bottom-nav">
@@ -78,5 +97,89 @@
     <a href="client-merch.html" class="tab">Merch</a>
     <a href="client-more.html" class="tab">More</a>
   </nav>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
+      authDomain: "pyb-fitness-web-app.firebaseapp.com",
+      projectId: "pyb-fitness-web-app",
+      storageBucket: "pyb-fitness-web-app.appspot.com",
+      messagingSenderId: "64609252136",
+      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let userId = "";
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userId = user.uid;
+        loadPBs();
+      } else {
+        alert("Please log in.");
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadPBs() {
+      db.collection("personalBests").doc(userId).get().then(doc => {
+        const list = document.getElementById("pbList");
+        list.innerHTML = "";
+        const pbs = doc.exists ? doc.data().pbs || [] : [];
+        pbs.forEach((pb, index) => {
+          const div = document.createElement("div");
+          div.className = "pb-item";
+          div.innerHTML = `<strong>${pb.name}:</strong> ${pb.value}
+            <button onclick="editPB(${index})">Edit</button>
+            <button onclick="deletePB(${index})">Delete</button>`;
+          list.appendChild(div);
+        });
+      });
+    }
+
+    function addPB() {
+      const name = document.getElementById("pbName").value.trim();
+      const value = document.getElementById("pbValue").value.trim();
+      if (!name || !value) return alert("Please enter both name and value.");
+
+      db.collection("personalBests").doc(userId).get().then(doc => {
+        const pbs = doc.exists ? doc.data().pbs || [] : [];
+        pbs.push({ name, value });
+        db.collection("personalBests").doc(userId).set({ pbs }).then(() => {
+          document.getElementById("pbName").value = "";
+          document.getElementById("pbValue").value = "";
+          loadPBs();
+        });
+      });
+    }
+
+    function editPB(index) {
+      const newName = prompt("New exercise name:");
+      const newValue = prompt("New value:");
+      if (!newName || !newValue) return;
+
+      db.collection("personalBests").doc(userId).get().then(doc => {
+        const pbs = doc.exists ? doc.data().pbs || [] : [];
+        pbs[index] = { name: newName, value: newValue };
+        db.collection("personalBests").doc(userId).set({ pbs }).then(loadPBs);
+      });
+    }
+
+    function deletePB(index) {
+      if (!confirm("Are you sure you want to delete this PB?")) return;
+      db.collection("personalBests").doc(userId).get().then(doc => {
+        const pbs = doc.exists ? doc.data().pbs || [] : [];
+        pbs.splice(index, 1);
+        db.collection("personalBests").doc(userId).set({ pbs }).then(loadPBs);
+      });
+    }
+  </script>
 </body>
 </html>
+
