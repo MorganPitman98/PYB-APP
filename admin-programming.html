@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Programming | PYB Fitness</title>
   <style>
     body {
@@ -13,19 +13,29 @@
       padding: 0;
       text-align: center;
     }
+    h1 {
+      margin: 1rem 0;
+    }
     .calendar-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow-x: auto;
-      margin: 1rem;
+      margin-bottom: 1rem;
+    }
+    .arrow {
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0 1rem;
+      user-select: none;
     }
     .day-selector {
       display: flex;
       gap: 0.5rem;
+      overflow-x: auto;
       background: #111;
       padding: 0.5rem;
       border-radius: 8px;
+      max-width: 80vw;
     }
     .day {
       background: #222;
@@ -34,6 +44,7 @@
       border-radius: 6px;
       cursor: pointer;
       min-width: 60px;
+      text-align: center;
     }
     .day.active {
       background: #00bfff;
@@ -48,6 +59,7 @@
       border: none;
       border-radius: 8px;
       padding: 1rem;
+      resize: none;
     }
     button {
       background: #00bfff;
@@ -82,11 +94,16 @@
 <body>
   <h1>Programming</h1>
   <div class="calendar-container">
+    <div class="arrow" onclick="changeDate(-1)">←</div>
     <div class="day-selector" id="daySelector"></div>
+    <div class="arrow" onclick="changeDate(1)">→</div>
   </div>
-  <textarea id="notes"></textarea>
-  <br />
-  <button onclick="saveNotes()">Save Changes</button>
+
+  <div style="padding: 1rem;">
+    <textarea id="notes"></textarea>
+    <br />
+    <button onclick="saveNotes()">Save Changes</button>
+  </div>
 
   <nav class="bottom-nav">
     <a class="tab" href="admin-dashboard.html">Dashboard</a>
@@ -98,62 +115,68 @@
   </nav>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
       authDomain: "pyb-fitness-web-app.firebaseapp.com",
       projectId: "pyb-fitness-web-app",
+      storageBucket: "pyb-fitness-web-app.appspot.com",
+      messagingSenderId: "64609252136",
+      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const daySelector = document.getElementById('daySelector');
-    const notesEl = document.getElementById('notes');
-    const today = new Date();
-    let selectedDate = getDateString(today);
+    let selectedDate = new Date();
 
-    function getDateString(date) {
+    function formatDate(date) {
       return date.toISOString().split('T')[0];
     }
 
-    function populateDays() {
-      for (let i = -3; i <= 3; i++) {
-        const date = new Date();
-        date.setDate(today.getDate() + i);
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        dayEl.textContent = date.toDateString().slice(0, 10);
-        dayEl.onclick = () => selectDate(getDateString(date), dayEl);
-        if (i === 0) {
-          dayEl.classList.add('active');
-        }
-        daySelector.appendChild(dayEl);
+    function updateCalendar() {
+      const daySelector = document.getElementById("daySelector");
+      daySelector.innerHTML = "";
+      const today = new Date(selectedDate);
+      today.setDate(today.getDate() - 3);
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const div = document.createElement("div");
+        div.className = "day" + (formatDate(d) === formatDate(selectedDate) ? " active" : "");
+        div.innerHTML = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+        div.onclick = () => {
+          selectedDate = d;
+          updateCalendar();
+          loadNotes();
+        };
+        daySelector.appendChild(div);
       }
     }
 
-    function selectDate(dateStr, el) {
-      selectedDate = dateStr;
-      document.querySelectorAll('.day').forEach(d => d.classList.remove('active'));
-      el.classList.add('active');
+    function changeDate(offset) {
+      selectedDate.setDate(selectedDate.getDate() + offset);
+      updateCalendar();
       loadNotes();
     }
 
     function loadNotes() {
-      db.collection('programming').doc(selectedDate).get().then(doc => {
-        notesEl.value = doc.exists ? doc.data().notes : '';
+      const dateKey = formatDate(selectedDate);
+      db.collection("programming").doc(dateKey).get().then((doc) => {
+        document.getElementById("notes").value = doc.exists ? doc.data().notes : "";
       });
     }
 
     function saveNotes() {
-      db.collection('programming').doc(selectedDate).set({
-        notes: notesEl.value
-      }).then(() => alert("Programming saved!"));
+      const dateKey = formatDate(selectedDate);
+      const notes = document.getElementById("notes").value;
+      db.collection("programming").doc(dateKey).set({ notes });
+      alert("Saved for " + dateKey);
     }
 
-    populateDays();
+    updateCalendar();
     loadNotes();
   </script>
 </body>
 </html>
-
