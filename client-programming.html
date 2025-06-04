@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Client Programming | PYB Fitness</title>
   <style>
     body {
@@ -23,15 +23,7 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 1rem;
-      gap: 0.5rem;
-    }
-
-    .arrow {
-      font-size: 1.5rem;
-      padding: 0.5rem;
-      cursor: pointer;
-      color: white;
-      user-select: none;
+      overflow-x: auto;
     }
 
     .day-selector {
@@ -50,13 +42,19 @@
       border-radius: 6px;
       cursor: pointer;
       min-width: 60px;
-      text-align: center;
     }
 
     .day.active {
       background: #00bfff;
       color: black;
       font-weight: bold;
+    }
+
+    .arrow {
+      font-size: 1.5rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      color: white;
     }
 
     .notes {
@@ -93,13 +91,27 @@
 <body>
   <h1>Programming</h1>
   <div class="calendar-container">
-    <div class="arrow" onclick="changeDate(-1)">←</div>
+    <div class="arrow" onclick="shiftWeek(-1)">←</div>
     <div class="day-selector" id="daySelector"></div>
-    <div class="arrow" onclick="changeDate(1)">→</div>
+    <div class="arrow" onclick="shiftWeek(1)">→</div>
   </div>
 
-  <div id="programmingNotes" class="notes">
-    Loading programming...
+  <div class="notes" id="notesDisplay">
+    <strong>PROGRAMMING NOTES</strong>
+    <p>A) Back Squat<br/>8,6,5</p>
+    <p>- Rest 2:00 Between Sets<br/>
+      - No Pauses this week just normal reps<br/>
+      - 1 set of 8, 1 set of 6, 1 set of 5<br/>
+      - 2011 tempo<br/>
+      - RPE 8–9/10</p>
+    <p>B) Every 3:00 x 3<br/>
+      8/8 Bulgarian Split Squat<br/>
+      8/8 Split Stance RDL</p>
+    <p>B) Partner WOD<br/>
+      3 Rounds<br/>
+      600m Run Together<br/>
+      60 wallball<br/>
+      30 Sit Up</p>
   </div>
 
   <nav class="bottom-nav">
@@ -111,62 +123,33 @@
     <a class="tab" href="client-merch.html">Merch</a>
   </nav>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
-      authDomain: "pyb-fitness-web-app.firebaseapp.com",
-      projectId: "pyb-fitness-web-app",
-      storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d",
-      measurementId: "G-SDDD8W759S"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let selectedDate = new Date();
+    const daySelector = document.getElementById('daySelector');
+    let startDate = new Date();
 
     function formatDate(date) {
-      return date.toISOString().split('T')[0];
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return `${dayNames[date.getDay()]}<br>${date.getDate()}`;
     }
 
-    function renderDate() {
-      const daySelector = document.getElementById("daySelector");
-      daySelector.innerHTML = "";
-
-      const day = selectedDate;
-      const dayDiv = document.createElement("div");
-      dayDiv.className = "day active";
-      dayDiv.innerHTML = `${day.toLocaleDateString('en-GB', { weekday: 'short' })}<br>${day.getDate()}`;
-      daySelector.appendChild(dayDiv);
+    function generateDays(start) {
+      daySelector.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(date.getDate() + i);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'day' + (i === 0 ? ' active' : '');
+        dayDiv.innerHTML = formatDate(date);
+        daySelector.appendChild(dayDiv);
+      }
     }
 
-    function changeDate(days) {
-      selectedDate.setDate(selectedDate.getDate() + days);
-      renderDate();
-      loadProgramming();
+    function shiftWeek(offset) {
+      startDate.setDate(startDate.getDate() + offset);
+      generateDays(startDate);
     }
 
-    function loadProgramming() {
-      const dateKey = formatDate(selectedDate);
-      const notesDiv = document.getElementById("programmingNotes");
-      db.collection("programming").doc(dateKey).get().then((doc) => {
-        if (doc.exists) {
-          notesDiv.innerText = doc.data().notes;
-        } else {
-          notesDiv.innerText = "No programming for this day.";
-        }
-      });
-    }
-
-    window.onload = () => {
-      renderDate();
-      loadProgramming();
-    };
+    generateDays(startDate);
   </script>
 </body>
 </html>
