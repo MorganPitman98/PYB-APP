@@ -9,17 +9,19 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
+      text-align: center;
       margin: 0;
       padding: 0;
-      text-align: center;
     }
-    h1 { margin: 1rem 0; }
+    h1 {
+      margin: 1rem 0;
+    }
     .calendar-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 1rem;
       gap: 0.5rem;
+      margin-bottom: 1rem;
     }
     .arrow {
       font-size: 1.5rem;
@@ -50,11 +52,34 @@
       color: black;
       font-weight: bold;
     }
+    .add-form {
+      background: #111;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      margin: 1rem auto;
+    }
+    .add-form input {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: none;
+      background: #222;
+      color: white;
+    }
+    .add-form button {
+      background: #00bfff;
+      color: black;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
     .workout-list {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
       padding: 1rem;
     }
     .workout {
@@ -62,6 +87,7 @@
       border-left: 4px solid #00bfff;
       padding: 1rem;
       border-radius: 8px;
+      margin: 0.5rem auto;
       width: 90%;
       text-align: left;
     }
@@ -69,10 +95,11 @@
       background: #00bfff;
       color: black;
       border: none;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem;
       border-radius: 4px;
       cursor: pointer;
-      margin: 0.25rem;
+      margin-top: 0.5rem;
+      margin-right: 0.5rem;
     }
     .bottom-nav {
       position: fixed;
@@ -92,32 +119,6 @@
       color: cyan;
       font-weight: bold;
     }
-    .add-class-form {
-      background: #111;
-      margin: 1rem auto;
-      padding: 1rem;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-    }
-    .add-class-form input {
-      display: block;
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      border: none;
-      border-radius: 4px;
-      background: #222;
-      color: white;
-    }
-    .add-class-form button {
-      background: #00bfff;
-      color: black;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -128,12 +129,12 @@
   <div class="arrow" onclick="changeDay(1)">→</div>
 </div>
 
-<div class="add-class-form">
+<div class="add-form">
   <h3>Add a Class</h3>
-  <input type="text" id="className" placeholder="Class Name" />
-  <input type="time" id="startTime" />
-  <input type="time" id="endTime" />
-  <input type="number" id="maxAttendees" placeholder="Max Attendees" />
+  <input id="className" type="text" placeholder="Class Name" />
+  <input id="classStart" type="time" />
+  <input id="classEnd" type="time" />
+  <input id="classMax" type="number" placeholder="Max Attendees" />
   <button onclick="addClass()">Add Class</button>
 </div>
 
@@ -155,7 +156,10 @@
   const firebaseConfig = {
     apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
     authDomain: "pyb-fitness-web-app.firebaseapp.com",
-    projectId: "pyb-fitness-web-app"
+    projectId: "pyb-fitness-web-app",
+    storageBucket: "pyb-fitness-web-app.appspot.com",
+    messagingSenderId: "64609252136",
+    appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
@@ -194,7 +198,7 @@
 
   function loadClasses() {
     const classList = document.getElementById("classList");
-    classList.innerHTML = "Loading...";
+    classList.innerHTML = "Loading classes...";
     const dateKey = formatDate(selectedDate);
     db.collection("classes").doc(dateKey).get().then((doc) => {
       classList.innerHTML = "";
@@ -206,10 +210,8 @@
           div.innerHTML = `
             <strong>${c.name}</strong><br>${c.start} - ${c.end}<br>
             ${c.attendees?.length || 0}/${c.max}<br>
-            <button onclick="editClass(${index})">Edit</button>
-            <button onclick="deleteClass(${index})">Delete</button>
-            <button onclick="alert('Attendees:\\n' + ${(c.attendees || []).join('\\n'))}">View Attendees</button>
-          `;
+            <button onclick="alert('Attendees:\\n${(c.attendees || []).join("\\n")}')">View Attendees</button>
+            <button onclick="deleteClass(${index})">Delete</button>`;
           classList.appendChild(div);
         });
       } else {
@@ -219,23 +221,22 @@
   }
 
   function addClass() {
-    const name = document.getElementById("className").value.trim();
-    const start = document.getElementById("startTime").value;
-    const end = document.getElementById("endTime").value;
-    const max = parseInt(document.getElementById("maxAttendees").value);
-    if (!name || !start || !end || isNaN(max)) {
-      return alert("Please fill in all fields.");
-    }
+    const name = document.getElementById("className").value;
+    const start = document.getElementById("classStart").value;
+    const end = document.getElementById("classEnd").value;
+    const max = parseInt(document.getElementById("classMax").value);
+    if (!name || !start || !end || isNaN(max)) return alert("Please fill all fields.");
+
     const dateKey = formatDate(selectedDate);
     db.collection("classes").doc(dateKey).get().then(doc => {
       const list = doc.exists ? doc.data().list : [];
       list.push({ name, start, end, max, attendees: [] });
       db.collection("classes").doc(dateKey).set({ list }).then(() => {
-        document.getElementById("className").value = "";
-        document.getElementById("startTime").value = "";
-        document.getElementById("endTime").value = "";
-        document.getElementById("maxAttendees").value = "";
         loadClasses();
+        document.getElementById("className").value = "";
+        document.getElementById("classStart").value = "";
+        document.getElementById("classEnd").value = "";
+        document.getElementById("classMax").value = "";
       });
     });
   }
@@ -250,10 +251,6 @@
     });
   }
 
-  function editClass(index) {
-    alert("Edit functionality can be added next if needed.");
-  }
-
   window.onload = () => {
     renderDays();
     loadClasses();
@@ -261,4 +258,3 @@
 </script>
 </body>
 </html>
-
