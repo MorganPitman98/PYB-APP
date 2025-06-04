@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Timetable | PYB Fitness</title>
   <style>
     body {
@@ -72,8 +72,7 @@
       padding: 0.5rem 1rem;
       border-radius: 4px;
       cursor: pointer;
-      margin-top: 0.5rem;
-      margin-right: 0.5rem;
+      margin: 0.25rem;
     }
     .bottom-nav {
       position: fixed;
@@ -93,6 +92,32 @@
       color: cyan;
       font-weight: bold;
     }
+    .add-class-form {
+      background: #111;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .add-class-form input {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      background: #222;
+      color: white;
+    }
+    .add-class-form button {
+      background: #00bfff;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -103,9 +128,16 @@
   <div class="arrow" onclick="changeDay(1)">→</div>
 </div>
 
-<div class="workout-list" id="classList">Loading classes...</div>
+<div class="add-class-form">
+  <h3>Add a Class</h3>
+  <input type="text" id="className" placeholder="Class Name" />
+  <input type="time" id="startTime" />
+  <input type="time" id="endTime" />
+  <input type="number" id="maxAttendees" placeholder="Max Attendees" />
+  <button onclick="addClass()">Add Class</button>
+</div>
 
-<button onclick="addClassPrompt()">Add New Class</button>
+<div class="workout-list" id="classList">Loading classes...</div>
 
 <nav class="bottom-nav">
   <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -123,10 +155,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
     authDomain: "pyb-fitness-web-app.firebaseapp.com",
-    projectId: "pyb-fitness-web-app",
-    storageBucket: "pyb-fitness-web-app.appspot.com",
-    messagingSenderId: "64609252136",
-    appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+    projectId: "pyb-fitness-web-app"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
@@ -174,10 +203,13 @@
         classes.forEach((c, index) => {
           const div = document.createElement("div");
           div.className = "workout";
-          div.innerHTML = `<strong>${c.name}</strong><br>${c.start} - ${c.end}<br>${(c.attendees || []).length}/${c.max}<br>
+          div.innerHTML = `
+            <strong>${c.name}</strong><br>${c.start} - ${c.end}<br>
+            ${c.attendees?.length || 0}/${c.max}<br>
             <button onclick="editClass(${index})">Edit</button>
             <button onclick="deleteClass(${index})">Delete</button>
-            <button onclick="alert('Attendees:\n' + ${(c.attendees || []).join('\n')})">View Attendees</button>`;
+            <button onclick="alert('Attendees:\\n' + ${(c.attendees || []).join('\\n'))}">View Attendees</button>
+          `;
           classList.appendChild(div);
         });
       } else {
@@ -186,44 +218,40 @@
     });
   }
 
-  function addClassPrompt() {
-    const name = prompt("Class name:");
-    const start = prompt("Start time (e.g., 06:00):");
-    const end = prompt("End time (e.g., 07:00):");
-    const max = parseInt(prompt("Max attendees:"), 10);
-    if (!name || !start || !end || isNaN(max)) return;
+  function addClass() {
+    const name = document.getElementById("className").value.trim();
+    const start = document.getElementById("startTime").value;
+    const end = document.getElementById("endTime").value;
+    const max = parseInt(document.getElementById("maxAttendees").value);
+    if (!name || !start || !end || isNaN(max)) {
+      return alert("Please fill in all fields.");
+    }
     const dateKey = formatDate(selectedDate);
-    db.collection("classes").doc(dateKey).get().then((doc) => {
+    db.collection("classes").doc(dateKey).get().then(doc => {
       const list = doc.exists ? doc.data().list : [];
       list.push({ name, start, end, max, attendees: [] });
-      db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
-    });
-  }
-
-  function editClass(index) {
-    const dateKey = formatDate(selectedDate);
-    db.collection("classes").doc(dateKey).get().then((doc) => {
-      if (!doc.exists) return;
-      const list = doc.data().list;
-      const c = list[index];
-      const name = prompt("Edit class name:", c.name);
-      const start = prompt("Edit start time:", c.start);
-      const end = prompt("Edit end time:", c.end);
-      const max = parseInt(prompt("Edit max attendees:", c.max), 10);
-      if (!name || !start || !end || isNaN(max)) return;
-      list[index] = { ...c, name, start, end, max };
-      db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
+      db.collection("classes").doc(dateKey).set({ list }).then(() => {
+        document.getElementById("className").value = "";
+        document.getElementById("startTime").value = "";
+        document.getElementById("endTime").value = "";
+        document.getElementById("maxAttendees").value = "";
+        loadClasses();
+      });
     });
   }
 
   function deleteClass(index) {
     const dateKey = formatDate(selectedDate);
-    db.collection("classes").doc(dateKey).get().then((doc) => {
+    db.collection("classes").doc(dateKey).get().then(doc => {
       if (!doc.exists) return;
       const list = doc.data().list;
       list.splice(index, 1);
       db.collection("classes").doc(dateKey).set({ list }).then(loadClasses);
     });
+  }
+
+  function editClass(index) {
+    alert("Edit functionality can be added next if needed.");
   }
 
   window.onload = () => {
