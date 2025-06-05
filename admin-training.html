@@ -10,44 +10,37 @@
       color: #00bfff;
       font-family: Arial, sans-serif;
       padding: 2rem;
+      text-align: center;
     }
     h1 {
-      text-align: center;
       margin-bottom: 2rem;
     }
-    .entry {
+    .upload-box {
       background: #111;
-      margin-bottom: 2rem;
       padding: 1rem;
       border-radius: 10px;
+      margin-bottom: 2rem;
     }
-    label {
+    input[type="file"] {
       display: block;
-      margin-top: 1rem;
-      color: white;
-    }
-    textarea, input[type="file"] {
-      width: 100%;
-      background: #222;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
+      margin: 1rem auto;
     }
     button {
       background: #00bfff;
-      color: black;
       border: none;
+      color: black;
       padding: 0.5rem 1rem;
-      margin-top: 1rem;
-      border-radius: 6px;
       font-weight: bold;
+      border-radius: 5px;
       cursor: pointer;
     }
-    img.preview {
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+    .gallery img {
       width: 100%;
-      margin-top: 1rem;
       border-radius: 8px;
     }
     .bottom-nav {
@@ -63,6 +56,7 @@
       color: white;
       font-size: 0.8rem;
       text-decoration: none;
+      padding: 0.5rem;
     }
     .bottom-nav .tab.active {
       color: cyan;
@@ -71,19 +65,14 @@
   </style>
 </head>
 <body>
-  <h1>Admin Training</h1>
-
-  <div class="entry">
-    <label for="pbNotes">PB Notes</label>
-    <textarea id="pbNotes" rows="4" placeholder="Write any personal best or workout results here..."></textarea>
-
-    <label for="photo">Attach Workout Photo (e.g. whiteboard)</label>
-    <input type="file" id="photo" accept="image/*" onchange="previewImage(event)">
-
-    <img id="photoPreview" class="preview" style="display:none;" />
-
-    <button onclick="saveWorkout()">Save Entry</button>
+  <h1>Upload Workout Photo</h1>
+  <div class="upload-box">
+    <input type="file" id="photoInput" accept="image/*" />
+    <button onclick="uploadPhoto()">Upload</button>
   </div>
+
+  <h2>Workout Photo Gallery</h2>
+  <div class="gallery" id="gallery">Loading photos...</div>
 
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -95,8 +84,9 @@
   </nav>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
@@ -106,45 +96,48 @@
       messagingSenderId: "64609252136",
       appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    function previewImage(event) {
-      const preview = document.getElementById('photoPreview');
-      preview.src = URL.createObjectURL(event.target.files[0]);
-      preview.style.display = 'block';
+    const gallery = document.getElementById("gallery");
+
+    function uploadPhoto() {
+      const file = document.getElementById("photoInput").files[0];
+      if (!file) return alert("Please choose a file.");
+
+      const fileRef = storage.ref().child("workoutPhotos/" + Date.now() + "_" + file.name);
+      fileRef.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+      }).then(url => {
+        return db.collection("workoutPhotos").add({ url, timestamp: Date.now() });
+      }).then(() => {
+        loadPhotos();
+        alert("Photo uploaded successfully!");
+        document.getElementById("photoInput").value = "";
+      }).catch(err => {
+        console.error("Upload error", err);
+        alert("Upload failed.");
+      });
     }
 
-    function saveWorkout() {
-      const pbNotes = document.getElementById('pbNotes').value.trim();
-      const file = document.getElementById('photo').files[0];
-      if (!pbNotes && !file) {
-        alert("Please enter some notes or select a photo.");
-        return;
-      }
-
-      const timestamp = new Date().toISOString();
-      const entryData = { notes: pbNotes, timestamp };
-
-      if (file) {
-        const storageRef = storage.ref().child("workout_photos/" + timestamp + "_" + file.name);
-        storageRef.put(file).then(snapshot => {
-          snapshot.ref.getDownloadURL().then(url => {
-            entryData.photoUrl = url;
-            db.collection("workoutEntries").add(entryData).then(() => {
-              alert("Workout entry saved!");
-              location.reload();
-            });
+    function loadPhotos() {
+      db.collection("workoutPhotos").orderBy("timestamp", "desc").get().then(snapshot => {
+        gallery.innerHTML = "";
+        if (snapshot.empty) {
+          gallery.innerHTML = "<p>No photos yet.</p>";
+        } else {
+          snapshot.forEach(doc => {
+            const img = document.createElement("img");
+            img.src = doc.data().url;
+            gallery.appendChild(img);
           });
-        });
-      } else {
-        db.collection("workoutEntries").add(entryData).then(() => {
-          alert("Workout entry saved!");
-          location.reload();
-        });
-      }
+        }
+      });
     }
+
+    loadPhotos();
   </script>
 </body>
 </html>
