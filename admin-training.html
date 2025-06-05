@@ -24,6 +24,7 @@
     input[type="file"] {
       display: block;
       margin: 1rem auto;
+      color: white;
     }
     button {
       background: #00bfff;
@@ -68,7 +69,7 @@
   <h1>Upload Workout Photo</h1>
   <div class="upload-box">
     <input type="file" id="photoInput" accept="image/*" />
-    <button onclick="uploadPhoto()">Upload</button>
+    <button id="uploadButton">Upload</button>
   </div>
 
   <h2>Workout Photo Gallery</h2>
@@ -83,6 +84,7 @@
     <a href="admin-more.html" class="tab">More</a>
   </nav>
 
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -101,39 +103,50 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
+    const uploadButton = document.getElementById("uploadButton");
+    const photoInput = document.getElementById("photoInput");
     const gallery = document.getElementById("gallery");
 
-    function uploadPhoto() {
-      const file = document.getElementById("photoInput").files[0];
-      if (!file) return alert("Please choose a file.");
+    uploadButton.addEventListener("click", () => {
+      const file = photoInput.files[0];
+      if (!file) return alert("Please select a photo.");
 
-      const fileRef = storage.ref().child("workoutPhotos/" + Date.now() + "_" + file.name);
-      fileRef.put(file).then(snapshot => {
-        return snapshot.ref.getDownloadURL();
-      }).then(url => {
-        return db.collection("workoutPhotos").add({ url, timestamp: Date.now() });
-      }).then(() => {
-        loadPhotos();
-        alert("Photo uploaded successfully!");
-        document.getElementById("photoInput").value = "";
-      }).catch(err => {
-        console.error("Upload error", err);
-        alert("Upload failed.");
-      });
-    }
+      const filename = `${Date.now()}_${file.name}`;
+      const fileRef = storage.ref("workoutPhotos/" + filename);
+
+      fileRef.put(file)
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => db.collection("workoutPhotos").add({
+          url,
+          timestamp: Date.now()
+        }))
+        .then(() => {
+          alert("Photo uploaded successfully.");
+          photoInput.value = "";
+          loadPhotos();
+        })
+        .catch(err => {
+          console.error("Upload failed:", err);
+          alert("Upload failed.");
+        });
+    });
 
     function loadPhotos() {
+      gallery.innerHTML = "Loading...";
       db.collection("workoutPhotos").orderBy("timestamp", "desc").get().then(snapshot => {
         gallery.innerHTML = "";
         if (snapshot.empty) {
-          gallery.innerHTML = "<p>No photos yet.</p>";
-        } else {
-          snapshot.forEach(doc => {
-            const img = document.createElement("img");
-            img.src = doc.data().url;
-            gallery.appendChild(img);
-          });
+          gallery.innerHTML = "<p>No photos uploaded yet.</p>";
+          return;
         }
+        snapshot.forEach(doc => {
+          const img = document.createElement("img");
+          img.src = doc.data().url;
+          gallery.appendChild(img);
+        });
+      }).catch(err => {
+        console.error("Failed to load photos:", err);
+        gallery.innerHTML = "<p>Error loading photos.</p>";
       });
     }
 
