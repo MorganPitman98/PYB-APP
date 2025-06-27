@@ -25,7 +25,7 @@
 
     async function loadInventory() {
       const inventoryDiv = document.getElementById("inventory");
-      inventoryDiv.innerHTML = "";
+      inventoryDiv.innerHTML = ""; // Clear previous items
 
       const merchRef = collection(db, "merch");
       const merchSnapshot = await getDocs(merchRef);
@@ -34,16 +34,19 @@
         const data = docSnap.data();
         const card = document.createElement("div");
         card.className = "merch-card";
+
         const img = document.createElement("img");
         img.src = data.image || "https://via.placeholder.com/200x200.png?text=Product+Image";
-        img.onerror = () => img.src = "https://via.placeholder.com/200x200.png?text=No+Image";
+        img.onerror = () => {
+          img.src = "https://via.placeholder.com/200x200.png?text=Product+Image";
+        };
 
         card.innerHTML = `
           <h3>${data.name}</h3>
           <p>Description: ${data.description}</p>
           <p>Price: £${data.price}</p>
           <p>Stock: ${data.stock}</p>
-          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', \`${data.description}\`, '${data.price}', '${data.stock}')">Edit</button>
+          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', \`${data.description}\`, ${data.price}, ${data.stock})">Edit</button>
           <button onclick="deleteItem('${docSnap.id}')">Delete</button>
         `;
         card.prepend(img);
@@ -54,10 +57,10 @@
     window.editItem = (id, name, image, description, price, stock) => {
       document.getElementById("item-id").value = id;
       document.getElementById("name").value = name;
+      document.getElementById("image-preview").src = image || "";
       document.getElementById("description").value = description;
       document.getElementById("price").value = price;
       document.getElementById("stock").value = stock;
-      document.getElementById("image-preview").src = image;
     };
 
     window.deleteItem = async (id) => {
@@ -68,46 +71,47 @@
     };
 
     window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("image").addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            document.getElementById("image-preview").src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
       document.getElementById("add-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-
         const id = document.getElementById("item-id").value;
         const name = document.getElementById("name").value;
+        const imageFile = document.getElementById("image").files[0];
         const description = document.getElementById("description").value;
         const price = parseFloat(document.getElementById("price").value);
         const stock = parseInt(document.getElementById("stock").value);
-        const imageFile = document.getElementById("image").files[0];
 
-        let imageUrl = document.getElementById("image-preview").src;
+        let imageUrl = "";
         if (imageFile) {
-          const storageRef = ref(storage, `product_images/${Date.now()}_${imageFile.name}`);
-          await uploadBytes(storageRef, imageFile);
-          imageUrl = await getDownloadURL(storageRef);
+          const imageRef = ref(storage, `merch/${Date.now()}_${imageFile.name}`);
+          await uploadBytes(imageRef, imageFile);
+          imageUrl = await getDownloadURL(imageRef);
+        } else {
+          imageUrl = document.getElementById("image-preview").src;
         }
 
-        const itemData = { name, description, price, stock, image: imageUrl };
+        const merchData = { name, image: imageUrl, description, price, stock };
 
         if (id) {
-          await updateDoc(doc(db, "merch", id), itemData);
+          await updateDoc(doc(db, "merch", id), merchData);
         } else {
-          await addDoc(collection(db, "merch"), itemData);
+          await addDoc(collection(db, "merch"), merchData);
         }
 
         document.getElementById("add-form").reset();
         document.getElementById("item-id").value = "";
         document.getElementById("image-preview").src = "";
         loadInventory();
-      });
-
-      document.getElementById("image").addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            document.getElementById("image-preview").src = event.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
       });
 
       loadInventory();
@@ -149,10 +153,28 @@
       max-width: 400px;
       text-align: left;
     }
-    .merch-card img, #image-preview {
+    .merch-card img {
       width: 100%;
       border-radius: 8px;
-      margin-top: 1rem;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -163,7 +185,7 @@
     <input type="hidden" id="item-id">
     <input type="text" id="name" placeholder="Item Name" required>
     <input type="file" id="image" accept="image/*">
-    <img id="image-preview" src="" alt="Image preview" style="display:block;max-height:200px;">
+    <img id="image-preview" src="" alt="Image preview" style="width:200px; display:block; margin:10px auto;">
     <textarea id="description" placeholder="Description" required></textarea>
     <input type="number" id="price" placeholder="Price (£)" step="0.01" required>
     <input type="number" id="stock" placeholder="Stock Quantity" required>
@@ -183,3 +205,4 @@
   </nav>
 </body>
 </html>
+
