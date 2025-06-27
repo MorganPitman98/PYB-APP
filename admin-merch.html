@@ -102,7 +102,7 @@
 
   <input type="text" id="itemName" placeholder="Item Name"/>
   <input type="file" id="imageInput"/>
-  <img id="preview" src="https://via.placeholder.com/300x200.png?text=No+Image" alt="Image preview" class="preview"/>
+  <img id="preview" src="https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" alt="Image preview" class="preview"/>
   <textarea id="description" placeholder="Description"></textarea>
   <input type="number" id="price" placeholder="Price (£)"/>
   <input type="number" id="stock" placeholder="Stock Quantity"/>
@@ -138,7 +138,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const inventoryDiv = document.getElementById("inventory");
-    const placeholderURL = "https://via.placeholder.com/300x200.png?text=No+Image";
+    const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg";
 
     document.getElementById("imageInput").addEventListener("change", function (e) {
       const file = e.target.files[0];
@@ -182,9 +182,7 @@
 
         const img = document.createElement("img");
         img.src = data.image && data.image.trim() !== "" ? data.image : placeholderURL;
-        img.onerror = () => {
-          img.src = placeholderURL;
-        };
+        img.onerror = () => img.src = placeholderURL;
 
         const name = document.createElement("h3");
         name.textContent = data.name;
@@ -238,4 +236,3 @@
   </script>
 </body>
 </html>
-
