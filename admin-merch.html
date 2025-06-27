@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Merch | PYB Fitness</title>
   <style>
     body {
@@ -10,56 +10,48 @@
       color: #00bfff;
       font-family: Arial, sans-serif;
       padding: 2rem;
-      text-align: center;
     }
     h1 {
-      margin-bottom: 1rem;
-    }
-    section {
+      text-align: center;
       margin-bottom: 2rem;
-      text-align: left;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    h2 {
-      color: cyan;
-      margin-bottom: 0.5rem;
     }
     label {
-      color: white;
       display: block;
       margin-top: 1rem;
+      color: white;
     }
     input, textarea {
       width: 100%;
       padding: 0.5rem;
       margin-top: 0.2rem;
       background: #222;
-      color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
+      color: white;
     }
     button {
-      margin-top: 1rem;
       background: #00bfff;
-      border: none;
       color: black;
-      padding: 0.5rem 1rem;
       font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .merch-list {
-      background: #111;
-      padding: 1rem;
-      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      border: none;
       margin-top: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
     }
-    .merch-item {
-      border-bottom: 1px solid #333;
-      padding: 0.5rem 0;
-      color: white;
+    .inventory {
+      background: #111;
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .item {
+      margin-bottom: 1.5rem;
+    }
+    img {
+      max-width: 100px;
+      display: block;
+      margin-bottom: 0.5rem;
     }
     .bottom-nav {
       position: fixed;
@@ -70,13 +62,12 @@
       background: #111;
       padding: 0.5rem 0;
     }
-    .bottom-nav .tab {
+    .tab {
       color: white;
       font-size: 0.8rem;
       text-decoration: none;
-      padding: 0.5rem;
     }
-    .bottom-nav .tab.active {
+    .tab.active {
       color: cyan;
       font-weight: bold;
     }
@@ -85,40 +76,30 @@
 <body>
   <h1>Admin Merch</h1>
 
-  <section>
+  <div>
     <h2>Add New Item</h2>
     <label>Item Name</label>
-    <input type="text" placeholder="e.g. PYB Hoodie" />
-    <label>Image URL</label>
-<input type="text" placeholder="https://link-to-image.jpg" />
-<label>Description</label>
-    <textarea rows="3" placeholder="Enter product details..."></textarea>
-    <label>Price (£)</label>
-    <input type="number" step="0.01" placeholder="e.g. 39.99" />
-    <label>Stock Quantity</label>
-    <input type="number" placeholder="e.g. 50" />
-    <button>Add Item</button>
-  </section>
+    <input id="itemName" type="text" />
 
-  <section class="merch-list">
+    <label>Image URL</label>
+    <input id="itemImage" type="text" placeholder="https://link-to-image.jpg" />
+
+    <label>Description</label>
+    <textarea id="itemDesc"></textarea>
+
+    <label>Price (£)</label>
+    <input id="itemPrice" type="number" step="0.01" />
+
+    <label>Stock Quantity</label>
+    <input id="itemStock" type="number" />
+
+    <button onclick="addItem()">Add Item</button>
+  </div>
+
+  <div class="inventory">
     <h2>Current Inventory</h2>
-    <div class="merch-item">
-<img src="https://via.placeholder.com/100" alt="Product Image" style="width:100px; height:auto; border-radius:6px; margin-bottom:0.5rem;" />
-<img src="https://via.placeholder.com/100" alt="Product Image" style="width:100px; height:auto; border-radius:6px; margin-bottom:0.5rem;" />
-      <strong>PYB Hoodie</strong><br/>
-      Description: Black hoodie with blue PYB logo<br/>
-      Price: £39.99<br/>
-      Stock: 27<br/>
-      <button>Edit</button>
-    </div>
-    <div class="merch-item">
-      <strong>PYB Bottle</strong><br/>
-      Description: Insulated gym bottle<br/>
-      Price: £14.99<br/>
-      Stock: 12<br/>
-      <button>Edit</button>
-    </div>
-  </section>
+    <div id="inventoryList"></div>
+  </div>
 
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -128,5 +109,74 @@
     <a href="admin-merch.html" class="tab active">Merch</a>
     <a href="admin-more.html" class="tab">More</a>
   </nav>
+
+  <script>
+    let editIndex = null;
+
+    function loadInventory() {
+      const list = document.getElementById("inventoryList");
+      list.innerHTML = "";
+      const items = JSON.parse(localStorage.getItem("merch") || "[]");
+
+      items.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <img src="${item.image}" alt="Product Image" onerror="this.src='https://via.placeholder.com/100';"/>
+          <strong>${item.name}</strong><br>
+          Description: ${item.desc}<br>
+          Price: £${item.price}<br>
+          Stock: ${item.stock}<br>
+          <button onclick="editItem(${index})">Edit</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function addItem() {
+      const name = document.getElementById("itemName").value;
+      const image = document.getElementById("itemImage").value;
+      const desc = document.getElementById("itemDesc").value;
+      const price = parseFloat(document.getElementById("itemPrice").value).toFixed(2);
+      const stock = parseInt(document.getElementById("itemStock").value);
+
+      let items = JSON.parse(localStorage.getItem("merch") || "[]");
+
+      const newItem = { name, image, desc, price, stock };
+
+      if (editIndex !== null) {
+        items[editIndex] = newItem;
+        editIndex = null;
+      } else {
+        items.push(newItem);
+      }
+
+      localStorage.setItem("merch", JSON.stringify(items));
+      clearForm();
+      loadInventory();
+    }
+
+    function editItem(index) {
+      const items = JSON.parse(localStorage.getItem("merch") || "[]");
+      const item = items[index];
+      document.getElementById("itemName").value = item.name;
+      document.getElementById("itemImage").value = item.image;
+      document.getElementById("itemDesc").value = item.desc;
+      document.getElementById("itemPrice").value = item.price;
+      document.getElementById("itemStock").value = item.stock;
+      editIndex = index;
+    }
+
+    function clearForm() {
+      document.getElementById("itemName").value = "";
+      document.getElementById("itemImage").value = "";
+      document.getElementById("itemDesc").value = "";
+      document.getElementById("itemPrice").value = "";
+      document.getElementById("itemStock").value = "";
+    }
+
+    loadInventory();
+  </script>
 </body>
 </html>
+
