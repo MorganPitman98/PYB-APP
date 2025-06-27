@@ -4,125 +4,152 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Client Merch | PYB Fitness</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap"/>
   <style>
     body {
-      background: #000;
+      background-color: #000;
       color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      text-align: center;
+      font-family: "Orbitron", sans-serif;
+      margin: 0;
+      padding: 0;
     }
+
     h1 {
-      margin-bottom: 1rem;
+      text-align: center;
+      margin-top: 20px;
     }
-    .merch-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
+
+    .inventory {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
     }
+
     .merch-card {
-      background: #111;
+      background-color: #111;
       border-radius: 10px;
-      padding: 1rem;
+      padding: 15px;
+      width: calc(25% - 40px);
+      box-sizing: border-box;
+      color: #fff;
       text-align: center;
     }
+
     .merch-card img {
       width: 100%;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
+      height: 200px;
+      object-fit: cover;
+      background: #222;
+      display: block;
+      margin-bottom: 10px;
     }
-    .merch-card h3 {
-      color: cyan;
-      margin: 0.5rem 0;
-    }
-    .merch-card p {
-      color: white;
-      margin: 0.25rem 0;
-    }
+
     .merch-card button {
-      margin-top: 0.5rem;
-      background: #00bfff;
-      color: black;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
+      background-color: #00bfff;
+      color: #000;
       font-weight: bold;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
+      margin-top: 10px;
     }
-    .bottom-nav {
+
+    nav {
       position: fixed;
       bottom: 0;
       width: 100%;
+      background: #000;
       display: flex;
       justify-content: space-around;
-      background: #111;
-      padding: 0.5rem 0;
+      padding: 10px 0;
+      border-top: 1px solid #00bfff;
     }
-    .bottom-nav .tab {
-      color: white;
-      font-size: 0.8rem;
+
+    nav a {
+      color: #fff;
       text-decoration: none;
-      padding: 0.5rem;
+      font-size: 14px;
     }
-    .bottom-nav .tab.active {
-      color: cyan;
+
+    nav a.active {
+      color: #00bfff;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>Client Merch</h1>
-  <div class="merch-grid" id="merchGrid">
-    <p>Loading...</p>
-  </div>
+  <h1>Merch</h1>
+  <div class="inventory" id="inventory"></div>
 
-  <nav class="bottom-nav">
-    <a href="client-dashboard.html" class="tab">Dashboard</a>
-    <a href="client-timetable.html" class="tab">Timetable</a>
-    <a href="client-programming.html" class="tab">Programming</a>
-    <a href="client-training.html" class="tab">Training</a>
-    <a href="client-merch.html" class="tab active">Merch</a>
-    <a href="client-more.html" class="tab">More</a>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="timetable.html">Timetable</a>
+    <a href="programming.html">Programming</a>
+    <a href="training.html">Training</a>
+    <a href="client-merch.html" class="active">Merch</a>
+    <a href="more.html">More</a>
   </nav>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <script>
-    // Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
+      apiKey: "AIzaSyBm7Yc5VNCRmfMf6Kl-_Ut7mpQotVlKMXU",
+      authDomain: "pyb-fitness-web-app.firebaseapp.com",
       projectId: "pyb-fitness-web-app",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      storageBucket: "pyb-fitness-web-app.appspot.com",
+      messagingSenderId: "151750048787",
+      appId: "1:151750048787:web:a82038a64d1a598921d1ba"
     };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const inventoryDiv = document.getElementById("inventory");
+    const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg";
 
-    const merchGrid = document.getElementById("merchGrid");
-    merchGrid.innerHTML = ""; // clear loading
+    async function loadInventory() {
+      inventoryDiv.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "merch"));
+      querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "merch-card";
 
-    db.collection("merch").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-      merchGrid.innerHTML = ""; // Clear previous content
-      snapshot.forEach(doc => {
-        const item = doc.data();
-        merchGrid.innerHTML += `
-          <div class="merch-card">
-            <img src="${item.image || 'https://via.placeholder.com/200'}" alt="${item.name}" />
-            <h3>${item.name}</h3>
-            <p>${item.description}</p>
-            <p>£${item.price}</p>
-            <button>Buy Now</button>
-          </div>
-        `;
+        const img = document.createElement("img");
+        img.src = data.image && data.image.trim() !== "" ? data.image : placeholderURL;
+        img.onerror = () => img.src = placeholderURL;
+
+        const name = document.createElement("h3");
+        name.textContent = data.name;
+
+        const desc = document.createElement("p");
+        desc.innerHTML = `<strong>Description:</strong> ${data.description}`;
+
+        const price = document.createElement("p");
+        price.innerHTML = `<strong>Price:</strong> £${data.price}`;
+
+        const stock = document.createElement("p");
+        stock.innerHTML = `<strong>Stock:</strong> ${data.stock}`;
+
+        const buyBtn = document.createElement("button");
+        buyBtn.textContent = "Buy";
+        buyBtn.onclick = () => alert(`To purchase: ${data.name} — please contact the gym.`); // Placeholder
+
+        card.appendChild(img);
+        card.appendChild(name);
+        card.appendChild(desc);
+        card.appendChild(price);
+        card.appendChild(stock);
+        card.appendChild(buyBtn);
+        inventoryDiv.appendChild(card);
       });
-    });
+    }
+
+    loadInventory();
   </script>
 </body>
 </html>
