@@ -36,8 +36,9 @@
         card.className = "merch-card";
 
         const img = document.createElement("img");
-        img.src = data.image || "https://via.placeholder.com/200x200.png?text=Product+Image";
-        img.onerror = () => {
+img.src = data.image || "https://via.placeholder.com/200x200.png?text=No+Image";
+img.onerror = () => { img.onerror = null; img.src = "https://via.placeholder.com/200x200.png?text=No+Image"; };
+
           img.src = "https://via.placeholder.com/200x200.png?text=Product+Image";
         };
 
