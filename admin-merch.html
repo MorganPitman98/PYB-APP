@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Merch | PYB Fitness</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     body {
       background: #000;
@@ -13,39 +11,37 @@
       font-family: Arial, sans-serif;
       padding: 2rem;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
-      margin-bottom: 2rem;
     }
     input, textarea {
       width: 100%;
-      margin: 0.3rem 0;
       padding: 0.5rem;
-      border-radius: 6px;
-      border: none;
+      margin-bottom: 0.5rem;
       background: #222;
       color: white;
+      border: none;
+      border-radius: 5px;
     }
     button {
-      margin-top: 0.5rem;
       padding: 0.5rem 1rem;
-      border: none;
       background: #00bfff;
       color: black;
-      font-weight: bold;
+      border: none;
       border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
+      margin-top: 0.5rem;
     }
-    .inventory {
-      margin-top: 2rem;
+    .item-card {
       background: #111;
       padding: 1rem;
+      margin-bottom: 1rem;
       border-radius: 10px;
     }
-    .item {
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #333;
+    .item-card img {
+      max-width: 100px;
+      margin-bottom: 0.5rem;
     }
     .bottom-nav {
       position: fixed;
@@ -58,9 +54,7 @@
     }
     .bottom-nav .tab {
       color: white;
-      font-size: 0.8rem;
       text-decoration: none;
-      padding: 0.5rem;
     }
     .bottom-nav .tab.active {
       color: cyan;
@@ -70,19 +64,16 @@
 </head>
 <body>
   <h1>Admin Merch</h1>
+  <h2>Add New Item</h2>
+  <input type="text" id="itemName" placeholder="Item Name" />
+  <input type="text" id="imageUrl" placeholder="Image URL" />
+  <textarea id="description" placeholder="Description"></textarea>
+  <input type="number" id="price" placeholder="Price (£)" />
+  <input type="number" id="stock" placeholder="Stock Quantity" />
+  <button id="addItemBtn">Add Item</button>
 
-  <h3>Add New Item</h3>
-  <input type="text" id="itemName" placeholder="Item Name">
-  <input type="text" id="itemImage" placeholder="Image URL">
-  <textarea id="itemDescription" placeholder="Description"></textarea>
-  <input type="number" id="itemPrice" placeholder="Price (£)">
-  <input type="number" id="itemStock" placeholder="Stock Quantity">
-  <button onclick="addItem()">Add Item</button>
-
-  <div class="inventory">
-    <h3>Current Inventory</h3>
-    <div id="inventoryList">Loading...</div>
-  </div>
+  <h2>Current Inventory</h2>
+  <div id="inventoryList"></div>
 
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab">Dashboard</a>
@@ -93,99 +84,65 @@
     <a href="admin-more.html" class="tab">More</a>
   </nav>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "pyb-fitness-web-app",
-      storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "YOUR_MSG_ID",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
       appId: "YOUR_APP_ID"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const merchRef = db.collection('merch');
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const merchRef = collection(db, "merch");
 
-    function renderInventory() {
-      merchRef.onSnapshot(snapshot => {
-        const inventoryDiv = document.getElementById('inventoryList');
-        inventoryDiv.innerHTML = ''; // Clear first
-        if (snapshot.empty) {
-          inventoryDiv.innerHTML = '<p>No merch available.</p>';
-          return;
-        }
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'item';
-          itemDiv.innerHTML = `
-            <strong>${data.name}</strong><br>
-            Description: ${data.description}<br>
-            Price: £${data.price.toFixed(2)}<br>
-            Stock: ${data.stock}<br>
-            <button onclick="editItem('${doc.id}', '${data.name}', '${data.image}', \`${data.description}\`, ${data.price}, ${data.stock})">Edit</button>
-            <button onclick="deleteItem('${doc.id}')">Delete</button>
-          `;
-          inventoryDiv.appendChild(itemDiv);
-        });
+    const addItemBtn = document.getElementById("addItemBtn");
+    const inventoryList = document.getElementById("inventoryList");
+
+    async function renderInventory() {
+      inventoryList.innerHTML = "";
+      const snapshot = await getDocs(merchRef);
+      snapshot.forEach(docSnap => {
+        const item = docSnap.data();
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "item-card";
+        itemDiv.innerHTML = `
+          <img src="${item.imageUrl || 'https://via.placeholder.com/200x200.png?text=No+Image'}" alt="Product Image" />
+          <h3>${item.itemName}</h3>
+          <p>Description: ${item.description}</p>
+          <p>Price: £${item.price}</p>
+          <p>Stock: ${item.stock}</p>
+          <button onclick="deleteItem('${docSnap.id}')">Delete</button>
+        `;
+        inventoryList.appendChild(itemDiv);
       });
     }
 
-    function addItem() {
-      const name = document.getElementById('itemName').value;
-      const image = document.getElementById('itemImage').value || 'https://via.placeholder.com/200';
-      const description = document.getElementById('itemDescription').value;
-      const price = parseFloat(document.getElementById('itemPrice').value);
-      const stock = parseInt(document.getElementById('itemStock').value);
-
-      if (!name || !description || isNaN(price) || isNaN(stock)) {
-        alert("Please fill in all fields.");
-        return;
-      }
-
-      merchRef.add({ name, image, description, price, stock });
-      document.getElementById('itemName').value = '';
-      document.getElementById('itemImage').value = '';
-      document.getElementById('itemDescription').value = '';
-      document.getElementById('itemPrice').value = '';
-      document.getElementById('itemStock').value = '';
-    }
-
-    function editItem(id, name, image, description, price, stock) {
-      document.getElementById('itemName').value = name;
-      document.getElementById('itemImage').value = image;
-      document.getElementById('itemDescription').value = description;
-      document.getElementById('itemPrice').value = price;
-      document.getElementById('itemStock').value = stock;
-
-      const btn = document.querySelector('button[onclick^="addItem"]');
-      btn.textContent = 'Update Item';
-      btn.onclick = function () {
-        merchRef.doc(id).update({
-          name: document.getElementById('itemName').value,
-          image: document.getElementById('itemImage').value || 'https://via.placeholder.com/200',
-          description: document.getElementById('itemDescription').value,
-          price: parseFloat(document.getElementById('itemPrice').value),
-          stock: parseInt(document.getElementById('itemStock').value),
-        });
-        btn.textContent = 'Add Item';
-        btn.onclick = addItem;
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemImage').value = '';
-        document.getElementById('itemDescription').value = '';
-        document.getElementById('itemPrice').value = '';
-        document.getElementById('itemStock').value = '';
+    addItemBtn.addEventListener("click", async () => {
+      const newItem = {
+        itemName: document.getElementById("itemName").value,
+        imageUrl: document.getElementById("imageUrl").value,
+        description: document.getElementById("description").value,
+        price: parseFloat(document.getElementById("price").value),
+        stock: parseInt(document.getElementById("stock").value)
       };
-    }
+      if (!newItem.itemName || isNaN(newItem.price)) return alert("Missing required fields");
+      await addDoc(merchRef, newItem);
+      renderInventory();
+    });
 
-    function deleteItem(id) {
-      if (confirm("Are you sure you want to delete this item?")) {
-        merchRef.doc(id).delete();
-      }
-    }
+    window.deleteItem = async (id) => {
+      await deleteDoc(doc(merchRef, id));
+      renderInventory();
+    };
 
     renderInventory();
   </script>
 </body>
 </html>
+
