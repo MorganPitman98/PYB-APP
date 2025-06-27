@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Client Merch | PYB Fitness</title>
   <style>
     body {
@@ -73,22 +73,8 @@
 </head>
 <body>
   <h1>Client Merch</h1>
-
-  <div class="merch-grid">
-    <div class="merch-card">
-      <img src="https://via.placeholder.com/200x200" alt="PYB Hoodie" />
-      <h3>PYB Hoodie</h3>
-      <p>Black hoodie with blue logo</p>
-      <p>£39.99</p>
-      <button>Buy Now</button>
-    </div>
-    <div class="merch-card">
-      <img src="https://via.placeholder.com/200x200" alt="PYB Bottle" />
-      <h3>PYB Bottle</h3>
-      <p>Insulated gym bottle</p>
-      <p>£14.99</p>
-      <button>Buy Now</button>
-    </div>
+  <div class="merch-grid" id="merchGrid">
+    <p>Loading...</p>
   </div>
 
   <nav class="bottom-nav">
@@ -99,5 +85,44 @@
     <a href="client-merch.html" class="tab active">Merch</a>
     <a href="client-more.html" class="tab">More</a>
   </nav>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "pyb-fitness-web-app",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const merchGrid = document.getElementById("merchGrid");
+    merchGrid.innerHTML = ""; // clear loading
+
+    db.collection("merch").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+      merchGrid.innerHTML = ""; // Clear previous content
+      snapshot.forEach(doc => {
+        const item = doc.data();
+        merchGrid.innerHTML += `
+          <div class="merch-card">
+            <img src="${item.image || 'https://via.placeholder.com/200'}" alt="${item.name}" />
+            <h3>${item.name}</h3>
+            <p>${item.description}</p>
+            <p>£${item.price}</p>
+            <button>Buy Now</button>
+          </div>
+        `;
+      });
+    });
+  </script>
 </body>
 </html>
