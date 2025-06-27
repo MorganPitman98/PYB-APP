@@ -102,7 +102,7 @@
 
   <input type="text" id="itemName" placeholder="Item Name"/>
   <input type="file" id="imageInput"/>
-  <img id="preview" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEMCAMAAABFdcq2AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADBQTFRF////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAW3v8NwAAACh0Uk5T////////////////////////////////////////////////////AOAjXRkAAAIkSURBVHja7NphkoNAEEXRpqf7/79dl8CI2UQB3e7mRw2rIsSJFizZs2bNmxYseLkCy36r/tncbmpNGIXV37uiwqsmGl4nEVdQ0AghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEKIRvgc4Fn8KH6XPv0ArbfRrC+d8dwFrleuY/74d/PcH9W5vYDz3f3s82Qggxg7Q0pWdeVe5D33hBjj80xCcFmr4Zbz+Gm0FMoXvm53uW3gR2cfYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEKIj4C/AHDI8coDMuQGAAAAAElFTkSuQmCC" alt="Image preview" class="preview"/>
+  <img id="preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23666' font-size='20'%3ENo Image%3C/text%3E%3C/svg%3E" alt="Image preview" class="preview"/>
   <textarea id="description" placeholder="Description"></textarea>
   <input type="number" id="price" placeholder="Price (£)"/>
   <input type="number" id="stock" placeholder="Stock Quantity"/>
@@ -112,12 +112,12 @@
   <div class="inventory" id="inventory"></div>
 
   <nav>
-    <a href="/PYB-APP/dashboard.html">Dashboard</a>
-    <a href="/PYB-APP/timetable.html">Timetable</a>
-    <a href="/PYB-APP/programming.html">Programming</a>
-    <a href="/PYB-APP/training.html">Training</a>
-    <a href="/PYB-APP/admin-merch.html" class="active">Merch</a>
-    <a href="/PYB-APP/more.html">More</a>
+    <a href="admin-dashboard.html">Dashboard</a>
+    <a href="admin-timetable.html">Timetable</a>
+    <a href="admin-programming.html">Programming</a>
+    <a href="admin-training.html">Training</a>
+    <a href="admin-merch.html" class="active">Merch</a>
+    <a href="admin-more.html">More</a>
   </nav>
 
   <script type="module">
@@ -138,7 +138,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const inventoryDiv = document.getElementById("inventory");
-    const placeholderURL = document.getElementById("preview").src;
+
+    const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23666' font-size='20'%3ENo Image%3C/text%3E%3C/svg%3E";
 
     document.getElementById("imageInput").addEventListener("change", function (e) {
       const file = e.target.files[0];
@@ -148,8 +149,6 @@
       };
       if (file) {
         reader.readAsDataURL(file);
-      } else {
-        document.getElementById("preview").src = placeholderURL;
       }
     });
 
@@ -161,14 +160,14 @@
       let imageURL = document.getElementById("preview").src;
 
       if (!imageURL || imageURL.trim() === "" || imageURL === "about:blank") {
-        imageURL = placeholderURL;
+        imageURL = fallbackImage;
       }
 
       await addDoc(collection(db, "merch"), { name, image: imageURL, description, price, stock });
       loadInventory();
       document.getElementById("itemName").value = "";
       document.getElementById("imageInput").value = "";
-      document.getElementById("preview").src = placeholderURL;
+      document.getElementById("preview").src = fallbackImage;
       document.getElementById("description").value = "";
       document.getElementById("price").value = "";
       document.getElementById("stock").value = "";
@@ -183,8 +182,8 @@
         card.className = "merch-card";
 
         const img = document.createElement("img");
-        img.src = data.image && data.image.trim() !== "" ? data.image : placeholderURL;
-        img.onerror = () => img.src = placeholderURL;
+        img.src = data.image && data.image.trim() !== "" ? data.image : fallbackImage;
+        img.onerror = () => img.src = fallbackImage;
 
         const name = document.createElement("h3");
         name.textContent = data.name;
@@ -238,3 +237,4 @@
   </script>
 </body>
 </html>
+
