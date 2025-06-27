@@ -6,7 +6,15 @@
   <title>Admin Merch | PYB Fitness</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      doc,
+      updateDoc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
@@ -21,32 +29,33 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const inventoryDiv = document.getElementById("inventory");
-    const form = document.getElementById("add-form");
-
     async function loadInventory() {
-      inventoryDiv.innerHTML = "";
-      const merchRef = collection(db, "merch");
-      const snapshot = await getDocs(merchRef);
+      const inventoryDiv = document.getElementById("inventory");
+      inventoryDiv.innerHTML = ""; // Clear to prevent duplication
 
-      snapshot.forEach(docSnap => {
+      const merchSnapshot = await getDocs(collection(db, "merch"));
+      merchSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const itemCard = document.createElement("div");
-        itemCard.className = "merch-card";
+        const card = document.createElement("div");
+        card.className = "merch-card";
 
-        const imageUrl = data.image || "https://via.placeholder.com/200x200.png?text=No+Image";
-        const safeDescription = data.description || "";
+        const img = document.createElement("img");
+        img.src = data.image?.trim() || "https://via.placeholder.com/200x200.png?text=Product+Image";
+        img.onerror = () => {
+          img.src = "https://via.placeholder.com/200x200.png?text=No+Image";
+        };
 
-        itemCard.innerHTML = `
-          <img src="${imageUrl}" onerror="this.src='https://via.placeholder.com/200x200.png?text=No+Image'" />
+        card.innerHTML = `
           <h3>${data.name}</h3>
-          <p>Description: ${safeDescription}</p>
-          <p>Price: £${data.price}</p>
+          <p>Description: ${data.description || "No description"}</p>
+          <p>Price: £${data.price.toFixed(2)}</p>
           <p>Stock: ${data.stock}</p>
-          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', \`${safeDescription}\`, '${data.price}', '${data.stock}')">Edit</button>
+          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', \`${data.description}\`, '${data.price}', '${data.stock}')">Edit</button>
           <button onclick="deleteItem('${docSnap.id}')">Delete</button>
         `;
-        inventoryDiv.appendChild(itemCard);
+
+        card.prepend(img);
+        inventoryDiv.appendChild(card);
       });
     }
 
@@ -60,24 +69,122 @@
     };
 
     window.deleteItem = async (id) => {
-      if (confirm("Delete this item?")) {
+      if (confirm("Are you sure you want to delete this item?")) {
         await deleteDoc(doc(db, "merch", id));
         loadInventory();
       }
     };
 
     window.addEventListener("DOMContentLoaded", () => {
-      form.addEventListener("submit", async (e) => {
+      document.getElementById("add-form").addEventListener("submit", async (e) => {
         e.preventDefault();
+
         const id = document.getElementById("item-id").value;
-        const name = document.getElementById("name").value.trim();
-        const image = document.getElementById("image").value.trim();
-        const description = document.getElementById("description").value.trim();
+        const name = document.getElementById("name").value;
+        const image = document.getElementById("image").value || "https://via.placeholder.com/200x200.png?text=Product+Image";
+        const description = document.getElementById("description").value;
         const price = parseFloat(document.getElementById("price").value);
         const stock = parseInt(document.getElementById("stock").value);
 
-        if (!name || isNaN(price) || isNaN(stock)) return alert("Please fill in all required fields.");
-
         if (id) {
-          await updateDoc(doc(db, "
+          await updateDoc(doc(db, "merch", id), { name, image, description, price, stock });
+        } else {
+          await addDoc(collection(db, "merch"), { name, image, description, price, stock });
+        }
+
+        document.getElementById("add-form").reset();
+        document.getElementById("item-id").value = "";
+        loadInventory();
+      });
+
+      loadInventory();
+    });
+  </script>
+  <style>
+    body {
+      background: #000;
+      color: #00bfff;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    input, textarea {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem auto;
+      background: #111;
+      border: none;
+      color: white;
+      border-radius: 5px;
+    }
+    button {
+      margin: 0.3rem;
+      background: #00bfff;
+      color: black;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .merch-card {
+      background: #111;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: left;
+    }
+    .merch-card img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 0.5rem 0;
+    }
+    .bottom-nav .tab {
+      color: white;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    .bottom-nav .tab.active {
+      color: cyan;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Merch</h1>
+  <h3>Add New Item</h3>
+  <form id="add-form">
+    <input type="hidden" id="item-id" />
+    <input type="text" id="name" placeholder="Item Name" required />
+    <input type="text" id="image" placeholder="Image URL (optional)" />
+    <textarea id="description" placeholder="Description" required></textarea>
+    <input type="number" id="price" placeholder="Price (£)" step="0.01" required />
+    <input type="number" id="stock" placeholder="Stock Quantity" required />
+    <button type="submit">Add Item</button>
+  </form>
+
+  <h3>Current Inventory</h3>
+  <div id="inventory"></div>
+
+  <nav class="bottom-nav">
+    <a href="admin-dashboard.html" class="tab">Dashboard</a>
+    <a href="admin-timetable.html" class="tab">Timetable</a>
+    <a href="admin-programming.html" class="tab">Programming</a>
+    <a href="admin-training.html" class="tab">Training</a>
+    <a href="admin-merch.html" class="tab active">Merch</a>
+    <a href="admin-more.html" class="tab">More</a>
+  </nav>
+</body>
+</html>
 
