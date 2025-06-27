@@ -6,12 +6,7 @@
   <title>Admin Merch | PYB Fitness</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import {
-      getStorage, ref, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
@@ -25,7 +20,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     async function loadInventory() {
       const inventoryDiv = document.getElementById("inventory");
@@ -40,22 +34,24 @@
         card.className = "merch-card";
 
         const img = document.createElement("img");
-        img.src = data.image || "";
-        img.alt = "Product Image";
+        img.src = data.image || "https://via.placeholder.com/300x180.png?text=No+Image";
+        img.alt = data.name;
         img.onerror = () => {
-          img.src = "";
-          img.alt = "";
+          img.src = "https://via.placeholder.com/300x180.png?text=No+Image";
         };
 
-        card.innerHTML = `
+        const info = document.createElement("div");
+        info.innerHTML = `
           <h3>${data.name}</h3>
           <p><strong>Description:</strong> ${data.description}</p>
           <p><strong>Price:</strong> £${data.price}</p>
           <p><strong>Stock:</strong> ${data.stock}</p>
-          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', \`${data.description}\`, '${data.price}', '${data.stock}')">Edit</button>
+          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', '${data.description}', '${data.price}', '${data.stock}')">Edit</button>
           <button onclick="deleteItem('${docSnap.id}')">Delete</button>
         `;
-        card.prepend(img);
+
+        card.appendChild(img);
+        card.appendChild(info);
         inventoryDiv.appendChild(card);
       });
     }
@@ -66,7 +62,7 @@
       document.getElementById("description").value = description;
       document.getElementById("price").value = price;
       document.getElementById("stock").value = stock;
-      document.getElementById("image-preview").src = image || "";
+      document.getElementById("preview").src = image || "https://via.placeholder.com/300x180.png?text=No+Image";
     };
 
     window.deleteItem = async (id) => {
@@ -77,58 +73,49 @@
     };
 
     window.addEventListener("DOMContentLoaded", () => {
-      const imageInput = document.getElementById("image");
-      const preview = document.getElementById("image-preview");
-
-      imageInput.addEventListener("change", () => {
-        const file = imageInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            preview.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          preview.src = "";
-        }
-      });
-
       document.getElementById("add-form").addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const id = document.getElementById("item-id").value;
         const name = document.getElementById("name").value;
-        const file = document.getElementById("image").files[0];
         const description = document.getElementById("description").value;
         const price = parseFloat(document.getElementById("price").value);
         const stock = parseInt(document.getElementById("stock").value);
+        const imageFile = document.getElementById("image").files[0];
 
-        let imageUrl = preview.src || "";
+        let image = "";
 
-        if (file) {
-          const storageRef = ref(storage, `merch/${Date.now()}-${file.name}`);
-          await uploadBytes(storageRef, file);
-          imageUrl = await getDownloadURL(storageRef);
+        if (imageFile) {
+          image = `https://via.placeholder.com/300x180.png?text=Uploaded+Image`; // Placeholder until Firebase Storage is integrated
         }
 
-        const itemData = { name, image: imageUrl, description, price, stock };
+        const data = { name, image, description, price, stock };
 
         if (id) {
-          await updateDoc(doc(db, "merch", id), itemData);
+          await updateDoc(doc(db, "merch", id), data);
         } else {
-          await addDoc(collection(db, "merch"), itemData);
+          await addDoc(collection(db, "merch"), data);
         }
 
         document.getElementById("add-form").reset();
-        preview.src = "";
         document.getElementById("item-id").value = "";
+        document.getElementById("preview").src = "https://via.placeholder.com/300x180.png?text=No+Image";
         loadInventory();
+      });
+
+      document.getElementById("image").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        const preview = document.getElementById("preview");
+        if (file) {
+          preview.src = URL.createObjectURL(file);
+        } else {
+          preview.src = "https://via.placeholder.com/300x180.png?text=No+Image";
+        }
       });
 
       loadInventory();
     });
   </script>
-
   <style>
     body {
       background: #000;
@@ -157,29 +144,33 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    #inventory {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
-      margin-top: 2rem;
+      justify-items: center;
     }
     .merch-card {
       background: #111;
-      padding: 1rem;
       border-radius: 10px;
-      width: 22%;
-      min-width: 200px;
-      box-sizing: border-box;
+      padding: 1rem;
+      width: 100%;
+      max-width: 280px;
       text-align: left;
     }
-    .merch-card img,
-    #image-preview {
+    .merch-card img {
       width: 100%;
-      height: 200px;
+      height: 180px;
       object-fit: cover;
       border-radius: 8px;
       margin-bottom: 0.5rem;
+    }
+    #preview {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 1rem 0;
     }
     .bottom-nav {
       position: fixed;
@@ -189,35 +180,34 @@
       display: flex;
       justify-content: space-around;
       padding: 0.5rem 0;
-      border-top: 1px solid #111;
+      border-top: 1px solid #222;
     }
-    .bottom-nav a {
+    .bottom-nav .tab {
       color: white;
       text-decoration: none;
-    }
-    .bottom-nav a.active {
-      color: #00bfff;
       font-weight: bold;
+    }
+    .bottom-nav .tab.active {
+      color: #00bfff;
     }
   </style>
 </head>
-
 <body>
   <h1>Admin Merch</h1>
   <h3>Add New Item</h3>
   <form id="add-form">
-    <input type="hidden" id="item-id">
-    <input type="text" id="name" placeholder="Item Name" required>
-    <input type="file" id="image" accept="image/*">
-    <img id="image-preview" src="" alt="Image preview">
+    <input type="hidden" id="item-id" />
+    <input type="text" id="name" placeholder="Item Name" required />
+    <input type="file" id="image" accept="image/*" />
+    <img id="preview" src="https://via.placeholder.com/300x180.png?text=No+Image" alt="Preview" />
     <textarea id="description" placeholder="Description" required></textarea>
-    <input type="number" id="price" placeholder="Price (£)" step="0.01" required>
-    <input type="number" id="stock" placeholder="Stock Quantity" required>
+    <input type="number" id="price" placeholder="Price (£)" step="0.01" required />
+    <input type="number" id="stock" placeholder="Stock Quantity" required />
     <button type="submit">Add Item</button>
   </form>
 
   <h3>Current Inventory</h3>
-  <div id="inventory"></div>
+  <div id="inventory" class="grid"></div>
 
   <nav class="bottom-nav">
     <a href="admin-dashboard.html" class="tab">Dashboard</a>
