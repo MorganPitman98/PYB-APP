@@ -102,7 +102,7 @@
 
   <input type="text" id="itemName" placeholder="Item Name"/>
   <input type="file" id="imageInput"/>
-  <img id="preview" src="https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" alt="Image preview" class="preview"/>
+  <img id="preview" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEMCAMAAABFdcq2AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADBQTFRF////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAW3v8NwAAACh0Uk5T////////////////////////////////////////////////////AOAjXRkAAAIkSURBVHja7NphkoNAEEXRpqf7/79dl8CI2UQB3e7mRw2rIsSJFizZs2bNmxYseLkCy36r/tncbmpNGIXV37uiwqsmGl4nEVdQ0AghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEKIRvgc4Fn8KH6XPv0ArbfRrC+d8dwFrleuY/74d/PcH9W5vYDz3f3s82Qggxg7Q0pWdeVe5D33hBjj80xCcFmr4Zbz+Gm0FMoXvm53uW3gR2cfYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEKIj4C/AHDI8coDMuQGAAAAAElFTkSuQmCC" alt="Image preview" class="preview"/>
   <textarea id="description" placeholder="Description"></textarea>
   <input type="number" id="price" placeholder="Price (£)"/>
   <input type="number" id="stock" placeholder="Stock Quantity"/>
@@ -112,12 +112,12 @@
   <div class="inventory" id="inventory"></div>
 
   <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="timetable.html">Timetable</a>
-    <a href="programming.html">Programming</a>
-    <a href="training.html">Training</a>
-    <a href="admin-merch.html" class="active">Merch</a>
-    <a href="more.html">More</a>
+    <a href="/PYB-APP/dashboard.html">Dashboard</a>
+    <a href="/PYB-APP/timetable.html">Timetable</a>
+    <a href="/PYB-APP/programming.html">Programming</a>
+    <a href="/PYB-APP/training.html">Training</a>
+    <a href="/PYB-APP/admin-merch.html" class="active">Merch</a>
+    <a href="/PYB-APP/more.html">More</a>
   </nav>
 
   <script type="module">
@@ -138,7 +138,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const inventoryDiv = document.getElementById("inventory");
-    const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg";
+    const placeholderURL = document.getElementById("preview").src;
 
     document.getElementById("imageInput").addEventListener("change", function (e) {
       const file = e.target.files[0];
@@ -148,6 +148,8 @@
       };
       if (file) {
         reader.readAsDataURL(file);
+      } else {
+        document.getElementById("preview").src = placeholderURL;
       }
     });
 
