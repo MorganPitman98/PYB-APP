@@ -4,9 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Merch | PYB Fitness</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+</head>
+<body style="background-color:black; color:deepskyblue; font-family:sans-serif; text-align:center;">
+  <h2>Admin Merch</h2>
+  <h4>Add New Item</h4>
+
+  <input id="name" placeholder="Item Name" style="width:95%; margin-bottom:10px;" />
+  <input type="file" id="imageInput" accept="image/*" style="width:95%;" />
+  <br /><img id="imagePreview" src="https://via.placeholder.com/300x150?text=Image+preview" style="max-width:300px; height:auto; margin:10px;" />
+  <br />
+  <textarea id="description" placeholder="Description" style="width:95%; margin-top:10px;"></textarea><br />
+  <input id="price" type="number" placeholder="Price (£)" style="width:95%;" /><br />
+  <input id="stock" type="number" placeholder="Stock Quantity" style="width:95%;" /><br />
+  <button onclick="addItem()" style="margin-top:10px;">Add Item</button>
+
+  <h4 style="margin-top:30px;">Current Inventory</h4>
+  <div id="inventory" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:20px; padding:10px;"></div>
+
+  <nav style="position:fixed; bottom:0; left:0; right:0; background:black; display:flex; justify-content:space-around; padding:10px 0;">
+    <a href="dashboard.html" style="color:white;">Dashboard</a>
+    <a href="admin-timetable.html" style="color:white;">Timetable</a>
+    <a href="admin-programming.html" style="color:white;">Programming</a>
+    <a href="admin-training.html" style="color:white;">Training</a>
+    <a href="admin-merch.html" style="color:deepskyblue;">Merch</a>
+    <a href="more.html" style="color:white;">More</a>
+  </nav>
+
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
@@ -20,202 +51,104 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storage = getStorage(app);
+    const inventoryRef = collection(db, "merch");
 
-    async function loadInventory() {
-      const inventoryDiv = document.getElementById("inventory");
+    const inventoryDiv = document.getElementById("inventory");
+    const imageInput = document.getElementById("imageInput");
+    const imagePreview = document.getElementById("imagePreview");
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (file) {
+        imagePreview.src = URL.createObjectURL(file);
+      } else {
+        imagePreview.src = "https://via.placeholder.com/300x150?text=Image+preview";
+      }
+    });
+
+    async function fetchInventory() {
       inventoryDiv.innerHTML = "";
-
-      const merchRef = collection(db, "merch");
-      const merchSnapshot = await getDocs(merchRef);
-
-      merchSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const card = document.createElement("div");
-        card.className = "merch-card";
-
-        const img = document.createElement("img");
-        img.src = data.image || "https://via.placeholder.com/300x180.png?text=No+Image";
-        img.alt = data.name;
-        img.onerror = () => {
-          img.src = "https://via.placeholder.com/300x180.png?text=No+Image";
-        };
-
-        const info = document.createElement("div");
-        info.innerHTML = `
-          <h3>${data.name}</h3>
-          <p><strong>Description:</strong> ${data.description}</p>
-          <p><strong>Price:</strong> £${data.price}</p>
-          <p><strong>Stock:</strong> ${data.stock}</p>
-          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image}', '${data.description}', '${data.price}', '${data.stock}')">Edit</button>
+      const snapshot = await getDocs(inventoryRef);
+      snapshot.forEach(docSnap => {
+        const item = docSnap.data();
+        const div = document.createElement("div");
+        div.style.backgroundColor = "#111";
+        div.style.color = "white";
+        div.style.padding = "10px";
+        div.style.borderRadius = "8px";
+        div.style.minHeight = "300px";
+        div.innerHTML = `
+          <img src="${item.imageUrl || 'https://via.placeholder.com/300x150?text=No+Image'}" style="width:100%; height:auto; object-fit:cover; border-radius:4px;"/>
+          <h4 style="color:deepskyblue;">${item.name}</h4>
+          <p><strong>Description:</strong> ${item.description}</p>
+          <p><strong>Price:</strong> £${item.price}</p>
+          <p><strong>Stock:</strong> ${item.stock}</p>
+          <button onclick="editItem('${docSnap.id}', '${item.name}', '${item.description}', ${item.price}, ${item.stock})">Edit</button>
           <button onclick="deleteItem('${docSnap.id}')">Delete</button>
         `;
-
-        card.appendChild(img);
-        card.appendChild(info);
-        inventoryDiv.appendChild(card);
+        inventoryDiv.appendChild(div);
       });
     }
 
-    window.editItem = (id, name, image, description, price, stock) => {
-      document.getElementById("item-id").value = id;
+    async function addItem() {
+      const name = document.getElementById("name").value;
+      const description = document.getElementById("description").value;
+      const price = parseFloat(document.getElementById("price").value);
+      const stock = parseInt(document.getElementById("stock").value);
+      const file = imageInput.files[0];
+
+      let imageUrl = "";
+
+      if (file) {
+        const storageRef = ref(storage, 'merch/' + file.name);
+        const snapshot = await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      await addDoc(inventoryRef, {
+        name, description, price, stock, imageUrl
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("description").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("stock").value = "";
+      imageInput.value = "";
+      imagePreview.src = "https://via.placeholder.com/300x150?text=Image+preview";
+
+      fetchInventory();
+    }
+
+    async function deleteItem(id) {
+      await deleteDoc(doc(db, "merch", id));
+      fetchInventory();
+    }
+
+    function editItem(id, name, description, price, stock) {
       document.getElementById("name").value = name;
       document.getElementById("description").value = description;
       document.getElementById("price").value = price;
       document.getElementById("stock").value = stock;
-      document.getElementById("preview").src = image || "https://via.placeholder.com/300x180.png?text=No+Image";
-    };
+      imageInput.value = "";
+      imagePreview.src = "https://via.placeholder.com/300x150?text=Image+preview";
 
-    window.deleteItem = async (id) => {
-      if (confirm("Delete this item?")) {
-        await deleteDoc(doc(db, "merch", id));
-        loadInventory();
-      }
-    };
+      const addButton = document.querySelector("button[onclick='addItem()']");
+      addButton.innerText = "Update Item";
+      addButton.onclick = async () => {
+        await updateDoc(doc(db, "merch", id), {
+          name: document.getElementById("name").value,
+          description: document.getElementById("description").value,
+          price: parseFloat(document.getElementById("price").value),
+          stock: parseInt(document.getElementById("stock").value),
+        });
+        addButton.innerText = "Add Item";
+        addButton.onclick = addItem;
+        fetchInventory();
+      };
+    }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("add-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const id = document.getElementById("item-id").value;
-        const name = document.getElementById("name").value;
-        const description = document.getElementById("description").value;
-        const price = parseFloat(document.getElementById("price").value);
-        const stock = parseInt(document.getElementById("stock").value);
-        const imageFile = document.getElementById("image").files[0];
-
-        let image = "";
-
-        if (imageFile) {
-          image = `https://via.placeholder.com/300x180.png?text=Uploaded+Image`; // Placeholder until Firebase Storage is integrated
-        }
-
-        const data = { name, image, description, price, stock };
-
-        if (id) {
-          await updateDoc(doc(db, "merch", id), data);
-        } else {
-          await addDoc(collection(db, "merch"), data);
-        }
-
-        document.getElementById("add-form").reset();
-        document.getElementById("item-id").value = "";
-        document.getElementById("preview").src = "https://via.placeholder.com/300x180.png?text=No+Image";
-        loadInventory();
-      });
-
-      document.getElementById("image").addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        const preview = document.getElementById("preview");
-        if (file) {
-          preview.src = URL.createObjectURL(file);
-        } else {
-          preview.src = "https://via.placeholder.com/300x180.png?text=No+Image";
-        }
-      });
-
-      loadInventory();
-    });
+    fetchInventory();
   </script>
-  <style>
-    body {
-      background: #000;
-      color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      text-align: center;
-    }
-    input, textarea {
-      display: block;
-      width: 100%;
-      padding: 0.5rem;
-      margin: 0.5rem auto;
-      background: #111;
-      border: none;
-      color: white;
-      border-radius: 5px;
-    }
-    button {
-      margin: 0.3rem;
-      background: #00bfff;
-      color: black;
-      font-weight: bold;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      justify-items: center;
-    }
-    .merch-card {
-      background: #111;
-      border-radius: 10px;
-      padding: 1rem;
-      width: 100%;
-      max-width: 280px;
-      text-align: left;
-    }
-    .merch-card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-    }
-    #preview {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin: 1rem 0;
-    }
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: #000;
-      display: flex;
-      justify-content: space-around;
-      padding: 0.5rem 0;
-      border-top: 1px solid #222;
-    }
-    .bottom-nav .tab {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .bottom-nav .tab.active {
-      color: #00bfff;
-    }
-  </style>
-</head>
-<body>
-  <h1>Admin Merch</h1>
-  <h3>Add New Item</h3>
-  <form id="add-form">
-    <input type="hidden" id="item-id" />
-    <input type="text" id="name" placeholder="Item Name" required />
-    <input type="file" id="image" accept="image/*" />
-    <img id="preview" src="https://via.placeholder.com/300x180.png?text=No+Image" alt="Preview" />
-    <textarea id="description" placeholder="Description" required></textarea>
-    <input type="number" id="price" placeholder="Price (£)" step="0.01" required />
-    <input type="number" id="stock" placeholder="Stock Quantity" required />
-    <button type="submit">Add Item</button>
-  </form>
-
-  <h3>Current Inventory</h3>
-  <div id="inventory" class="grid"></div>
-
-  <nav class="bottom-nav">
-    <a href="admin-dashboard.html" class="tab">Dashboard</a>
-    <a href="admin-timetable.html" class="tab">Timetable</a>
-    <a href="admin-programming.html" class="tab">Programming</a>
-    <a href="admin-training.html" class="tab">Training</a>
-    <a href="admin-merch.html" class="tab active">Merch</a>
-    <a href="admin-more.html" class="tab">More</a>
-  </nav>
 </body>
 </html>
