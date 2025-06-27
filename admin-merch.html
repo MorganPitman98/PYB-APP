@@ -102,11 +102,11 @@
 
   <input type="text" id="itemName" placeholder="Item Name"/>
   <input type="file" id="imageInput"/>
-  <img id="preview" src="https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" alt="Image preview" class="preview"/>
+  <img id="preview" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png" alt="Image preview" class="preview"/>
   <textarea id="description" placeholder="Description"></textarea>
   <input type="number" id="price" placeholder="Price (£)"/>
   <input type="number" id="stock" placeholder="Stock Quantity"/>
-  <button onclick="addItem()">Add Item</button>
+  <button id="addItemBtn">Add Item</button>
 
   <h2>Current Inventory</h2>
   <div class="inventory" id="inventory"></div>
@@ -138,55 +138,38 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const inventoryDiv = document.getElementById("inventory");
-    const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg";
-
-    let imageBase64 = "";
+    const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
 
     document.getElementById("imageInput").addEventListener("change", function (e) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        imageBase64 = reader.result;
-        document.getElementById("preview").src = imageBase64;
+        document.getElementById("preview").src = reader.result;
       };
       if (file) {
         reader.readAsDataURL(file);
-      } else {
-        imageBase64 = "";
-        document.getElementById("preview").src = placeholderURL;
       }
     });
 
     async function addItem() {
-      const name = document.getElementById("itemName").value.trim();
-      const description = document.getElementById("description").value.trim();
+      const name = document.getElementById("itemName").value;
+      const description = document.getElementById("description").value;
       const price = parseFloat(document.getElementById("price").value);
       const stock = parseInt(document.getElementById("stock").value);
-      const imageURL = imageBase64 || placeholderURL;
+      let imageURL = document.getElementById("preview").src;
 
-      if (!name || isNaN(price) || isNaN(stock)) {
-        alert("Please fill in all fields correctly.");
-        return;
+      if (!imageURL || imageURL.trim() === "" || imageURL === "about:blank") {
+        imageURL = placeholderURL;
       }
 
-      try {
-        await addDoc(collection(db, "merch"), {
-          name, description, price, stock, image: imageURL
-        });
-
-        // Reset form
-        document.getElementById("itemName").value = "";
-        document.getElementById("imageInput").value = "";
-        document.getElementById("preview").src = placeholderURL;
-        document.getElementById("description").value = "";
-        document.getElementById("price").value = "";
-        document.getElementById("stock").value = "";
-        imageBase64 = "";
-
-        loadInventory();
-      } catch (error) {
-        alert("Error adding item: " + error.message);
-      }
+      await addDoc(collection(db, "merch"), { name, image: imageURL, description, price, stock });
+      loadInventory();
+      document.getElementById("itemName").value = "";
+      document.getElementById("imageInput").value = "";
+      document.getElementById("preview").src = placeholderURL;
+      document.getElementById("description").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("stock").value = "";
     }
 
     async function loadInventory() {
@@ -240,9 +223,6 @@
       const newDescription = prompt("New description:", data.description);
       const newPrice = parseFloat(prompt("New price (£):", data.price));
       const newStock = parseInt(prompt("New stock:", data.stock));
-
-      if (!newName || isNaN(newPrice) || isNaN(newStock)) return;
-
       await updateDoc(doc(db, "merch", id), {
         name: newName,
         description: newDescription,
@@ -253,6 +233,8 @@
     }
 
     loadInventory();
+    document.getElementById("addItemBtn").addEventListener("click", addItem);
   </script>
 </body>
 </html>
+
