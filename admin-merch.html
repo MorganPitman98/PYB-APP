@@ -140,36 +140,53 @@
     const inventoryDiv = document.getElementById("inventory");
     const placeholderURL = "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg";
 
+    let imageBase64 = "";
+
     document.getElementById("imageInput").addEventListener("change", function (e) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        document.getElementById("preview").src = reader.result;
+        imageBase64 = reader.result;
+        document.getElementById("preview").src = imageBase64;
       };
       if (file) {
         reader.readAsDataURL(file);
+      } else {
+        imageBase64 = "";
+        document.getElementById("preview").src = placeholderURL;
       }
     });
 
     async function addItem() {
-      const name = document.getElementById("itemName").value;
-      const description = document.getElementById("description").value;
+      const name = document.getElementById("itemName").value.trim();
+      const description = document.getElementById("description").value.trim();
       const price = parseFloat(document.getElementById("price").value);
       const stock = parseInt(document.getElementById("stock").value);
-      let imageURL = document.getElementById("preview").src;
+      const imageURL = imageBase64 || placeholderURL;
 
-      if (!imageURL || imageURL.trim() === "" || imageURL === "about:blank" || imageURL.includes("No-Image")) {
-        imageURL = placeholderURL;
+      if (!name || isNaN(price) || isNaN(stock)) {
+        alert("Please fill in all fields correctly.");
+        return;
       }
 
-      await addDoc(collection(db, "merch"), { name, image: imageURL, description, price, stock });
-      loadInventory();
-      document.getElementById("itemName").value = "";
-      document.getElementById("imageInput").value = "";
-      document.getElementById("preview").src = placeholderURL;
-      document.getElementById("description").value = "";
-      document.getElementById("price").value = "";
-      document.getElementById("stock").value = "";
+      try {
+        await addDoc(collection(db, "merch"), {
+          name, description, price, stock, image: imageURL
+        });
+
+        // Reset form
+        document.getElementById("itemName").value = "";
+        document.getElementById("imageInput").value = "";
+        document.getElementById("preview").src = placeholderURL;
+        document.getElementById("description").value = "";
+        document.getElementById("price").value = "";
+        document.getElementById("stock").value = "";
+        imageBase64 = "";
+
+        loadInventory();
+      } catch (error) {
+        alert("Error adding item: " + error.message);
+      }
     }
 
     async function loadInventory() {
@@ -223,6 +240,9 @@
       const newDescription = prompt("New description:", data.description);
       const newPrice = parseFloat(prompt("New price (£):", data.price));
       const newStock = parseInt(prompt("New stock:", data.stock));
+
+      if (!newName || isNaN(newPrice) || isNaN(newStock)) return;
+
       await updateDoc(doc(db, "merch", id), {
         name: newName,
         description: newDescription,
@@ -236,5 +256,3 @@
   </script>
 </body>
 </html>
-
-
