@@ -4,228 +4,236 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Merch | PYB Fitness</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
-      authDomain: "pyb-fitness-web-app.firebaseapp.com",
-      projectId: "pyb-fitness-web-app",
-      storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d",
-      measurementId: "G-SDDD8W759S"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    async function loadInventory() {
-      const container = document.getElementById("inventory-container");
-      container.innerHTML = "";
-      const merchRef = collection(db, "merch");
-      const merchSnapshot = await getDocs(merchRef);
-
-      merchSnapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const card = document.createElement("div");
-        card.className = "merch-card";
-
-        const img = document.createElement("img");
-        img.src = data.image || placeholderURL;
-        img.onerror = () => img.src = placeholderURL;
-        card.appendChild(img);
-
-        const info = document.createElement("div");
-        info.className = "info";
-        info.innerHTML = `
-          <h3>${data.name}</h3>
-          <p>Description: ${data.description}</p>
-          <p>Price: £${data.price}</p>
-          <p>Stock: ${data.stock}</p>
-        `;
-
-        const btnDiv = document.createElement("div");
-        btnDiv.className = "btn-row";
-        btnDiv.innerHTML = `
-          <button onclick="editItem('${docSnap.id}', '${data.name}', '${data.image||""}', '${data.description}', '${data.price}', '${data.stock}')">Edit</button>
-          <button onclick="deleteItem('${docSnap.id}')">Delete</button>
-        `;
-        info.appendChild(btnDiv);
-        card.appendChild(info);
-        container.appendChild(card);
-      });
-    }
-
-    window.editItem = (id, name, image, description, price, stock) => {
-      document.getElementById("item-id").value = id;
-      document.getElementById("name").value = name;
-      document.getElementById("image-file").value = ""; // clear file input
-      document.getElementById("description").value = description;
-      document.getElementById("price").value = price;
-      document.getElementById("stock").value = stock;
-      document.getElementById("preview").src = image || placeholderURL;
-    };
-
-    window.deleteItem = async (id) => {
-      if (confirm("Delete this item?")) {
-        await deleteDoc(doc(db, "merch", id));
-        loadInventory();
-      }
-    };
-
-    const placeholderURL = "https://via.placeholder.com/300x200.png?text=No+Image";
-
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("add-form").addEventListener("submit", async e => {
-        e.preventDefault();
-        const id = document.getElementById("item-id").value;
-        const name = document.getElementById("name").value;
-        const desc = document.getElementById("description").value;
-        const price = parseFloat(document.getElementById("price").value);
-        const stock = parseInt(document.getElementById("stock").value);
-        let imageURL = document.getElementById("preview").src === placeholderURL ? "" : document.getElementById("preview").src;
-
-        if (id) {
-          await updateDoc(doc(db, "merch", id), { name, image: imageURL, description: desc, price, stock });
-        } else {
-          await addDoc(collection(db, "merch"), { name, image: imageURL, description: desc, price, stock });
-        }
-        e.target.reset();
-        document.getElementById("item-id").value = "";
-        document.getElementById("preview").src = placeholderURL;
-        loadInventory();
-      });
-
-      document.getElementById("image-file").addEventListener("change", e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => document.getElementById("preview").src = reader.result;
-        if (file) reader.readAsDataURL(file);
-      });
-
-      loadInventory();
-    });
-  </script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap"/>
   <style>
     body {
-      background: #000;
+      background-color: #000;
       color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
+      font-family: "Orbitron", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2 {
       text-align: center;
     }
-    input, textarea {
+
+    input, textarea, button {
       display: block;
-      width: 100%;
-      padding: .5rem;
-      margin: .5rem auto;
+      width: 90%;
+      margin: 10px auto;
+      padding: 10px;
       background: #111;
+      color: #fff;
       border: none;
-      color: white;
-      border-radius: 6px;
+      border-radius: 4px;
     }
-    input[type="file"] {
-      padding: .2rem;
-    }
+
     button {
-      margin: .3rem;
-      background: #00bfff;
-      color: black;
+      background-color: #00bfff;
+      color: #000;
       font-weight: bold;
-      padding: .5rem 1rem;
-      border: none;
-      border-radius: 5px;
       cursor: pointer;
+      width: 100px;
     }
-    form {
-      max-width: 600px;
-      margin: auto;
-      text-align: left;
+
+    .inventory {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
     }
-    #preview {
-      display: block;
-      margin: .5rem auto;
-      max-width: 300px;
-      max-height: 200px;
-      border: 1px solid #444;
-      border-radius: 6px;
-    }
-    #inventory-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-top: 2rem;
-    }
+
     .merch-card {
-      background: #111;
+      background-color: #111;
       border-radius: 10px;
-      overflow: hidden;
-      text-align: left;
+      padding: 15px;
+      width: calc(25% - 40px);
+      box-sizing: border-box;
+      color: #fff;
     }
+
     .merch-card img {
       width: 100%;
       height: 200px;
       object-fit: cover;
       background: #222;
-    }
-    .info {
-      padding: 1rem;
-    }
-    .info h3 {
-      margin: 0;
-      color: cyan;
-    }
-    .btn-row {
-      margin-top: .5rem;
+      display: block;
     }
 
-    .bottom-nav {
+    .merch-card button {
+      margin-right: 10px;
+    }
+
+    .preview {
+      display: block;
+      margin: 10px auto;
+      max-width: 200px;
+      max-height: 200px;
+    }
+
+    nav {
       position: fixed;
       bottom: 0;
       width: 100%;
+      background: #000;
       display: flex;
       justify-content: space-around;
-      background: #111;
-      padding: .5rem 0;
+      padding: 10px 0;
+      border-top: 1px solid #00bfff;
     }
-    .bottom-nav .tab {
-      color: white;
-      font-size: .8rem;
+
+    nav a {
+      color: #fff;
       text-decoration: none;
-      padding: .5rem;
+      font-size: 14px;
     }
-    .bottom-nav .tab.active {
-      color: cyan;
+
+    nav a.active {
+      color: #00bfff;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>Admin Merch</h1>
-  <h3>Add New Item</h3>
-  <form id="add-form">
-    <input type="hidden" id="item-id">
-    <input type="text" id="name" placeholder="Item Name" required>
-    <input type="file" id="image-file">
-    <img id="preview" src="https://via.placeholder.com/300x200.png?text=No+Image" alt="Image preview">
-    <textarea id="description" placeholder="Description" required></textarea>
-    <input type="number" id="price" placeholder="Price (£)" step="0.01" required>
-    <input type="number" id="stock" placeholder="Stock Quantity" required>
-    <button type="submit">Add Item</button>
-  </form>
+  <h2>Add New Item</h2>
 
-  <h3>Current Inventory</h3>
-  <div id="inventory-container"></div>
+  <input type="text" id="itemName" placeholder="Item Name"/>
+  <input type="file" id="imageInput"/>
+  <img id="preview" src="https://via.placeholder.com/200x200?text=Image" alt="Image preview" class="preview"/>
+  <textarea id="description" placeholder="Description"></textarea>
+  <input type="number" id="price" placeholder="Price (£)"/>
+  <input type="number" id="stock" placeholder="Stock Quantity"/>
+  <button onclick="addItem()">Add Item</button>
 
-  <nav class="bottom-nav">
-    <a href="admin-dashboard.html" class="tab">Dashboard</a>
-    <a href="admin-timetable.html" class="tab">Timetable</a>
-    <a href="admin-programming.html" class="tab">Programming</a>
-    <a href="admin-training.html" class="tab">Training</a>
-    <a href="admin-merch.html" class="tab active">Merch</a>
-    <a href="admin-more.html" class="tab">More</a>
+  <h2>Current Inventory</h2>
+  <div class="inventory" id="inventory"></div>
+
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="timetable.html">Timetable</a>
+    <a href="programming.html">Programming</a>
+    <a href="training.html">Training</a>
+    <a href="admin-merch.html" class="active">Merch</a>
+    <a href="more.html">More</a>
   </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBm7Yc5VNCRmfMf6Kl-_Ut7mpQotVlKMXU",
+      authDomain: "pyb-fitness-web-app.firebaseapp.com",
+      projectId: "pyb-fitness-web-app",
+      storageBucket: "pyb-fitness-web-app.appspot.com",
+      messagingSenderId: "151750048787",
+      appId: "1:151750048787:web:a82038a64d1a598921d1ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const inventoryDiv = document.getElementById("inventory");
+    const placeholderURL = "https://via.placeholder.com/300x200?text=No+Image";
+
+    document.getElementById("imageInput").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        document.getElementById("preview").src = reader.result;
+      };
+      if (file) {
+        reader.readAsDataURL(file);
+      }
+    });
+
+    async function addItem() {
+      const name = document.getElementById("itemName").value;
+      const description = document.getElementById("description").value;
+      const price = parseFloat(document.getElementById("price").value);
+      const stock = parseInt(document.getElementById("stock").value);
+      let imageURL = document.getElementById("preview").src;
+
+      if (!imageURL || imageURL.trim() === "" || imageURL === "about:blank") {
+        imageURL = placeholderURL;
+      }
+
+      await addDoc(collection(db, "merch"), { name, image: imageURL, description, price, stock });
+      loadInventory();
+      document.getElementById("itemName").value = "";
+      document.getElementById("imageInput").value = "";
+      document.getElementById("preview").src = placeholderURL;
+      document.getElementById("description").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("stock").value = "";
+    }
+
+    async function loadInventory() {
+      inventoryDiv.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "merch"));
+      querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "merch-card";
+
+        const img = document.createElement("img");
+        img.src = data.image && data.image.trim() !== "" ? data.image : placeholderURL;
+        img.onerror = () => img.src = placeholderURL;
+
+        const name = document.createElement("h3");
+        name.textContent = data.name;
+
+        const desc = document.createElement("p");
+        desc.innerHTML = `<strong>Description:</strong> ${data.description}`;
+
+        const price = document.createElement("p");
+        price.innerHTML = `<strong>Price:</strong> £${data.price}`;
+
+        const stock = document.createElement("p");
+        stock.innerHTML = `<strong>Stock:</strong> ${data.stock}`;
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => editItem(docSnap.id, data);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = async () => {
+          await deleteDoc(doc(db, "merch", docSnap.id));
+          loadInventory();
+        };
+
+        card.appendChild(img);
+        card.appendChild(name);
+        card.appendChild(desc);
+        card.appendChild(price);
+        card.appendChild(stock);
+        card.appendChild(editBtn);
+        card.appendChild(deleteBtn);
+        inventoryDiv.appendChild(card);
+      });
+    }
+
+    async function editItem(id, data) {
+      const newName = prompt("New name:", data.name);
+      const newDescription = prompt("New description:", data.description);
+      const newPrice = parseFloat(prompt("New price (£):", data.price));
+      const newStock = parseInt(prompt("New stock:", data.stock));
+      await updateDoc(doc(db, "merch", id), {
+        name: newName,
+        description: newDescription,
+        price: newPrice,
+        stock: newStock
+      });
+      loadInventory();
+    }
+
+    loadInventory();
+  </script>
 </body>
 </html>
+
