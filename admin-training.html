@@ -4,21 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Training | PYB Fitness</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap"/>
   <style>
     body {
       background-color: #000;
       color: #00bfff;
-      font-family: 'Orbitron', sans-serif;
+      font-family: "Orbitron", sans-serif;
       margin: 0;
       padding: 0;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
     }
 
-    input[type="file"] {
+    input[type="file"], button {
       display: block;
       margin: 10px auto;
       padding: 10px;
@@ -26,17 +26,13 @@
       color: #fff;
       border: none;
       border-radius: 4px;
+      font-family: "Orbitron", sans-serif;
     }
 
     button {
-      display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
       background-color: #00bfff;
       color: #000;
       font-weight: bold;
-      border: none;
-      border-radius: 4px;
       cursor: pointer;
     }
 
@@ -44,15 +40,16 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
+      gap: 20px;
       padding: 20px;
     }
 
-    .gallery img {
+    .photo {
       width: 200px;
       height: 200px;
       object-fit: cover;
-      border-radius: 5px;
+      border-radius: 10px;
+      background: #222;
     }
 
     nav {
@@ -80,19 +77,21 @@
 </head>
 <body>
   <h1>Admin Training</h1>
+  <h2>Upload Workout Photo</h2>
 
-  <input type="file" id="photoInput" />
-  <button onclick="uploadPhoto()">Upload Photo</button>
+  <input type="file" id="photoInput" accept="image/*" />
+  <button onclick="uploadPhoto()">Upload</button>
 
+  <h2>Workout Gallery</h2>
   <div class="gallery" id="gallery"></div>
 
   <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="timetable.html">Timetable</a>
-    <a href="programming.html">Programming</a>
-    <a href="training.html" class="active">Training</a>
+    <a href="admin-dashboard.html">Dashboard</a>
+    <a href="admin-timetable.html">Timetable</a>
+    <a href="admin-programming.html">Programming</a>
+    <a href="admin-training.html" class="active">Training</a>
     <a href="admin-merch.html">Merch</a>
-    <a href="more.html">More</a>
+    <a href="admin-more.html">More</a>
   </nav>
 
   <script type="module">
@@ -114,39 +113,36 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const storage = getStorage(app);
-
-    const gallery = document.getElementById("gallery");
+    const db = getFirestore(app);
+    const galleryDiv = document.getElementById("gallery");
 
     async function uploadPhoto() {
       const fileInput = document.getElementById("photoInput");
       const file = fileInput.files[0];
-      if (!file) {
-        alert("Please select a file first.");
-        return;
-      }
+      if (!file) return alert("Please select a photo.");
 
       const storageRef = ref(storage, `training-photos/${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      const url = await getDownloadURL(storageRef);
 
-      await addDoc(collection(db, "workouts"), { imageUrl: downloadURL });
-      loadGallery();
+      await addDoc(collection(db, "trainingPhotos"), { url });
       fileInput.value = "";
+      loadPhotos();
     }
 
-    async function loadGallery() {
-      gallery.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "workouts"));
-      querySnapshot.forEach(doc => {
+    async function loadPhotos() {
+      galleryDiv.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "trainingPhotos"));
+      querySnapshot.forEach(docSnap => {
         const img = document.createElement("img");
-        img.src = doc.data().imageUrl;
-        gallery.appendChild(img);
+        img.src = docSnap.data().url;
+        img.className = "photo";
+        galleryDiv.appendChild(img);
       });
     }
 
-    loadGallery();
+    loadPhotos();
   </script>
 </body>
 </html>
