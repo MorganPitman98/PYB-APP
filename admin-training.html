@@ -4,153 +4,149 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Training | PYB Fitness</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet"/>
   <style>
     body {
-      background: #000;
+      background-color: #000;
       color: #00bfff;
-      font-family: Arial, sans-serif;
-      padding: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
       text-align: center;
     }
-    h1 {
-      margin-bottom: 2rem;
-    }
-    .upload-box {
-      background: #111;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-    }
+
     input[type="file"] {
       display: block;
-      margin: 1rem auto;
-      color: white;
-    }
-    button {
-      background: #00bfff;
+      margin: 10px auto;
+      padding: 10px;
+      background: #111;
+      color: #fff;
       border: none;
-      color: black;
-      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #00bfff;
+      color: #000;
       font-weight: bold;
-      border-radius: 5px;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
     }
+
     .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
     }
+
     .gallery img {
-      width: 100%;
-      border-radius: 8px;
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
     }
-    .bottom-nav {
+
+    nav {
       position: fixed;
       bottom: 0;
       width: 100%;
+      background: #000;
       display: flex;
       justify-content: space-around;
-      background: #111;
-      padding: 0.5rem 0;
+      padding: 10px 0;
+      border-top: 1px solid #00bfff;
     }
-    .bottom-nav .tab {
-      color: white;
-      font-size: 0.8rem;
+
+    nav a {
+      color: #fff;
       text-decoration: none;
-      padding: 0.5rem;
+      font-size: 14px;
     }
-    .bottom-nav .tab.active {
-      color: cyan;
+
+    nav a.active {
+      color: #00bfff;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>Upload Workout Photo</h1>
-  <div class="upload-box">
-    <input type="file" id="photoInput" accept="image/*" />
-    <button id="uploadButton">Upload</button>
-  </div>
+  <h1>Admin Training</h1>
 
-  <h2>Workout Photo Gallery</h2>
-  <div class="gallery" id="gallery">Loading photos...</div>
+  <input type="file" id="photoInput" />
+  <button onclick="uploadPhoto()">Upload Photo</button>
 
-  <nav class="bottom-nav">
-    <a href="admin-dashboard.html" class="tab">Dashboard</a>
-    <a href="admin-timetable.html" class="tab">Timetable</a>
-    <a href="admin-programming.html" class="tab">Programming</a>
-    <a href="admin-training.html" class="tab active">Training</a>
-    <a href="admin-merch.html" class="tab">Merch</a>
-    <a href="admin-more.html" class="tab">More</a>
+  <div class="gallery" id="gallery"></div>
+
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="timetable.html">Timetable</a>
+    <a href="programming.html">Programming</a>
+    <a href="training.html" class="active">Training</a>
+    <a href="admin-merch.html">Merch</a>
+    <a href="more.html">More</a>
   </nav>
 
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    import {
+      getFirestore, collection, addDoc, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBgu6zMvtOqz9admi-Ai9QmH79I2f7Lq8I",
+      apiKey: "AIzaSyBm7Yc5VNCRmfMf6Kl-_Ut7mpQotVlKMXU",
       authDomain: "pyb-fitness-web-app.firebaseapp.com",
       projectId: "pyb-fitness-web-app",
       storageBucket: "pyb-fitness-web-app.appspot.com",
-      messagingSenderId: "64609252136",
-      appId: "1:64609252136:web:4045e9aab5f5bd11f2161d"
+      messagingSenderId: "151750048787",
+      appId: "1:151750048787:web:a82038a64d1a598921d1ba"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    const uploadButton = document.getElementById("uploadButton");
-    const photoInput = document.getElementById("photoInput");
     const gallery = document.getElementById("gallery");
 
-    uploadButton.addEventListener("click", () => {
-      const file = photoInput.files[0];
-      if (!file) return alert("Please select a photo.");
+    async function uploadPhoto() {
+      const fileInput = document.getElementById("photoInput");
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select a file first.");
+        return;
+      }
 
-      const filename = `${Date.now()}_${file.name}`;
-      const fileRef = storage.ref("workoutPhotos/" + filename);
+      const storageRef = ref(storage, `training-photos/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
 
-      fileRef.put(file)
-        .then(snapshot => snapshot.ref.getDownloadURL())
-        .then(url => db.collection("workoutPhotos").add({
-          url,
-          timestamp: Date.now()
-        }))
-        .then(() => {
-          alert("Photo uploaded successfully.");
-          photoInput.value = "";
-          loadPhotos();
-        })
-        .catch(err => {
-          console.error("Upload failed:", err);
-          alert("Upload failed.");
-        });
-    });
+      await addDoc(collection(db, "workouts"), { imageUrl: downloadURL });
+      loadGallery();
+      fileInput.value = "";
+    }
 
-    function loadPhotos() {
-      gallery.innerHTML = "Loading...";
-      db.collection("workoutPhotos").orderBy("timestamp", "desc").get().then(snapshot => {
-        gallery.innerHTML = "";
-        if (snapshot.empty) {
-          gallery.innerHTML = "<p>No photos uploaded yet.</p>";
-          return;
-        }
-        snapshot.forEach(doc => {
-          const img = document.createElement("img");
-          img.src = doc.data().url;
-          gallery.appendChild(img);
-        });
-      }).catch(err => {
-        console.error("Failed to load photos:", err);
-        gallery.innerHTML = "<p>Error loading photos.</p>";
+    async function loadGallery() {
+      gallery.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "workouts"));
+      querySnapshot.forEach(doc => {
+        const img = document.createElement("img");
+        img.src = doc.data().imageUrl;
+        gallery.appendChild(img);
       });
     }
 
-    loadPhotos();
+    loadGallery();
   </script>
 </body>
 </html>
