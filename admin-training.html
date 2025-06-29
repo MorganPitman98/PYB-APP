@@ -18,15 +18,15 @@
       text-align: center;
     }
 
-    input[type="file"], button {
+    input, button {
       display: block;
+      width: 90%;
       margin: 10px auto;
       padding: 10px;
       background: #111;
       color: #fff;
       border: none;
       border-radius: 4px;
-      font-family: "Orbitron", sans-serif;
     }
 
     button {
@@ -34,22 +34,32 @@
       color: #000;
       font-weight: bold;
       cursor: pointer;
+      width: 100px;
     }
 
-    .gallery {
+    .photo-tile {
+      background-color: #111;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px;
+      color: #fff;
+      display: inline-block;
+      vertical-align: top;
+      width: calc(33% - 40px);
+      box-sizing: border-box;
+    }
+
+    .photo-tile img {
+      width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+
+    #photoGallery {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 20px;
       padding: 20px;
-    }
-
-    .photo {
-      width: 200px;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 10px;
-      background: #222;
     }
 
     nav {
@@ -79,11 +89,11 @@
   <h1>Admin Training</h1>
   <h2>Upload Workout Photo</h2>
 
-  <input type="file" id="photoInput" accept="image/*" />
-  <button onclick="uploadPhoto()">Upload</button>
+  <input type="file" id="photoInput" />
+  <button id="uploadButton">Upload</button>
 
-  <h2>Workout Gallery</h2>
-  <div class="gallery" id="gallery"></div>
+  <h2>Previous Workouts</h2>
+  <div id="photoGallery"></div>
 
   <nav>
     <a href="admin-dashboard.html">Dashboard</a>
@@ -97,11 +107,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
-      getStorage, ref, uploadBytes, getDownloadURL
+      getStorage, ref, uploadBytes, getDownloadURL, listAll
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-    import {
-      getFirestore, collection, addDoc, getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBm7Yc5VNCRmfMf6Kl-_Ut7mpQotVlKMXU",
@@ -114,35 +121,40 @@
 
     const app = initializeApp(firebaseConfig);
     const storage = getStorage(app);
-    const db = getFirestore(app);
-    const galleryDiv = document.getElementById("gallery");
+    const uploadButton = document.getElementById("uploadButton");
 
     async function uploadPhoto() {
       const fileInput = document.getElementById("photoInput");
       const file = fileInput.files[0];
-      if (!file) return alert("Please select a photo.");
+      if (!file) return alert("Please choose a file first.");
 
-      const storageRef = ref(storage, `training-photos/${Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `trainingPhotos/${Date.now()}_${file.name}`);
       await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-
-      await addDoc(collection(db, "trainingPhotos"), { url });
-      fileInput.value = "";
       loadPhotos();
+      fileInput.value = "";
     }
 
     async function loadPhotos() {
-      galleryDiv.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "trainingPhotos"));
-      querySnapshot.forEach(docSnap => {
+      const gallery = document.getElementById("photoGallery");
+      gallery.innerHTML = "";
+
+      const folderRef = ref(storage, "trainingPhotos");
+      const result = await listAll(folderRef);
+
+      for (const itemRef of result.items) {
+        const url = await getDownloadURL(itemRef);
+        const tile = document.createElement("div");
+        tile.className = "photo-tile";
         const img = document.createElement("img");
-        img.src = docSnap.data().url;
-        img.className = "photo";
-        galleryDiv.appendChild(img);
-      });
+        img.src = url;
+        tile.appendChild(img);
+        gallery.appendChild(tile);
+      }
     }
 
+    uploadButton.addEventListener("click", uploadPhoto);
     loadPhotos();
   </script>
 </body>
 </html>
+
